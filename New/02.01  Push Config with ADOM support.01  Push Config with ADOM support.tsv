@@ -29,21 +29,20 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 ## Failed with {"detail":"Push successfully."}
 ## Configuration push for device (d1) succeeded
 003  Verify the ADOM disabled setting can be pushed
-	SSH_Write	config global	config system global	set adom-admin didable	end
+	SSH_Write	config global	config system global	set adom-admin disable	end
 	Push_Config
 
 004  Verify the ADOM Enable and new added ADOM can be can be pushed together
-	SSH_Write	config global	config system global	set adom-admin enable	end
+	SSH_Write	config system global	set adom-admin enable	end
+	Sleep	3
 	SSH_Write	config vdom	edit ADOM_01	end
 	Push_Config
-
-005  When push ADOM config, 
-## can :)
 
 005  Verify the new ADOM server policy can be pushed
 
 ## unsupported
-006  Verify delete the new added ADOM server policy can be pushed
+006  Verify root VDOM Virtual still can be pushed
+	Push_Config
 
 007  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
 
@@ -51,7 +50,9 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 
 009  Verify the root VDOM config can still be pushed
 
-010  
+010  Verify wizard is supported
+
+011  Verify job is supported
 
 301  Verify the empty data will not cause any isue
 	POST	/api/v1/system/maintenance/clean/	{"entries":[{}, {}, {}]}
@@ -99,7 +100,7 @@ Push_Config
 #	Sleep	20
 	POST	/api/v1/config/config-check/	{"group":${gid_1}}
 	Response Code Should Be	200
-	Sleep	50
+	Sleep	60
 	POST	/api/v1/config/push-config/	{"group":${gid_1}}
 	Response Code Should Be	200
 	Response Should Contain Sub Dictionary	detail=Push successfully.
