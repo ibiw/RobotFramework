@@ -1,0 +1,32 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create_Config_Directory	Create_Config_File
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the command file can be download
+	GET	/api/v1/jobs/config-file/download/?name=Directory_1/File_1.conf
+	Response Code Should Be	200
+
+002  Verify the backup file can be download
+	GET	/api/v1/jobs/backup-file/download/?name=Directory_1/File_1.conf
+	Response Code Should Be	200
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create_Config_Directory
+	Create_File_On_Setup	/api/v1/jobs/backup-file/	type=directory	name=Directory_1
+	Create_File_On_Setup	/api/v1/jobs/config-file/	type=directory	name=Directory_1
+
+Create_Config_File
+	Create_File_On_Setup	/api/v1/jobs/backup-file/
+	...	type=file	name=Directory_1/File_1.conf	content=${File_Content}
+	Create_File_On_Setup	/api/v1/jobs/config-file/
+	...	type=file	name=Directory_1/File_1.conf	content=${File_Content}
+
+Cleaning environments
+	DELETE	/api/v1/jobs/backup-file/?type=directory&name=Directory_1
+	DELETE	/api/v1/jobs/config-file/?type=directory&name=Directory_1

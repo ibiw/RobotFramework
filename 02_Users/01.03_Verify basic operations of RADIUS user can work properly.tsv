@@ -1,0 +1,101 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_RADIUSServer	Add_RADIUSUser
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_data_radius_user}	username=test1	password=123456	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=radius
+&{Auto_radiususer1_credential_incorrect}	username=test1	password=fortinetfdsfsd
+&{Auto_radiususer1_credential}	username=test1	password=123456
+&{patch_data}	name=Auto_RADIUSServer1	server_uri_1=10.200.10.16
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the added radius user can be view by admin
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	username=test1	id=${User_ID}	url=/api/v1/system/user/${User_ID}/	comments=This is a normal radius user
+
+002  Verify the options of added radius user can be view by admin
+	OPTIONS	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	name=User Detail	description=Display a user.
+
+003  Verify the head method can be supported for added radius user
+	HEAD	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+
+004  Verify the duplicated radius user can't be added
+	POST	/api/v1/system/user/	${request_data_radius_user}
+	Response Code Should Be	400
+	Response Should Contain String	A user with that username already exists
+
+005  Verify the radius user can't login with incorrect password
+	POST	/api/v1/auth-tokens/	${Auto_radiususer1_credential_incorrect}
+	Response Code Should Be	400
+	Response Should Contain String	Authentication failure. Please try again...
+
+006  Verify the new added radius user can login
+	POST	/api/v1/auth-tokens/	${Auto_radiususer1_credential}
+	Response Code Should Be	200
+	Response Should Contain Key	expires
+	Response Should Contain Key	token
+
+007  Verify the radius user can be view by himself
+	Fetch_CM_Token	${Auto_radiususer1_credential}
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	username=test1	id=${User_ID}	url=/api/v1/system/user/${User_ID}/	comments=This is a normal radius user
+
+008  Verify the added radius user can view the user list
+	GET	/api/v1/system/user/
+	Response Code Should Be	200
+
+009  Verify the radius user can logout
+	DELETE	/api/v1/auth-tokens/	${admin_headers}
+	Response Code Should Be	200
+	Response Should Contain String	logout succeeded
+	Response Should Contain Key	token
+
+010  Edit the RADIUS server IP to make the server is unreachable
+	Fetch_CM_Token
+	PATCH	/api/v1/system/radius-server/${ID}/	${patch_data}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	server_uri_1=10.200.10.16	server_secret_1=fortinet
+
+011  Verify the RADIUS user can login with the fallback password
+	POST	/api/v1/auth-tokens/	${Auto_radiususer1_credential}
+	Response Code Should Be	200
+	Response Should Contain Key	expires
+	Response Should Contain Key	token
+
+012  Verify the RADIUS user with fallback password can logout
+	DELETE	/api/v1/auth-tokens/	${admin_headers}
+	Response Code Should Be	200
+	Response Should Contain String	logout succeeded
+	Response Should Contain Key	token
+
+012  Verify the RADIUS Server which associated users can be delete
+	Fetch_CM_Token
+	${User_ID}=	Search_Filter_ID	/api/v1/system/user/	search=test1
+	Pass Execution If	'${User_ID}' == '-1'	No User exist
+	DELETE	/api/v1/system/user/${User_ID}
+	Response Code Should Be	204
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_RADIUSServer
+	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.10.15	server_secret_1=fortinet
+
+Add_RADIUSUser
+	Create_User_On_Setup	/api/v1/system/user/	username=test1	password=123456	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=RADIUS
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test1	username
+	Delete_On_Teardown	/api/v1/system/radius-server/	Auto_RADIUSServer1	name
+
+

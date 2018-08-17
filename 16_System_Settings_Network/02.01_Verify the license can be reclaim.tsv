@@ -1,0 +1,45 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Upload License
+#Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+#001  Verify the licenses can be reclaimed
+#	${Device_Dic}	Create Dictionary	device_id=${Device_ID}
+#	${Device_Dic}	Create List	${Device_Dic}
+#	${Device_Dictionary}	Create Dictionary	device=${Device_Dic}
+#	POST	/api/v1/licenses/reclaim/	${Device_Dictionary}
+#	Response Code Should Be	200
+#	Sleep	100
+#	Response Should Contain Sub Dictionary	detail=Reclaiming license succeeded
+
+#002  Verify the license's status changed
+#	GET	/api/v1/licenses/
+#	Response Code Should Be	200
+#	${License_Statistics}	Create Dictionary	lock=${1}	total=${2}	used=${0}	invalid=${0}	free=${1}
+#	Response Should Contain Sub Dictionary	statistics=${License_Statistics}
+
+#003  Verify the Elog can record correct
+#	Sleep	2
+#	Last Elog Sholud Contain	Reclaiming license from device (${Device_Name2}) succeeded. Reclaim license: ${license_file1[14:30]}.  License status changed from used to lock
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name2}	username=${Device_Username2}
+	...	password=${Device_Password2}	ipaddress=${Device_IPaddress2}	variables=${Device_Variables2}	group=${ID}
+	${Device_ID}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name2}&name__exact=${Device_Name2}
+	Set Suite Variable	${Device_ID}
+
+Upload License
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file1}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name2}

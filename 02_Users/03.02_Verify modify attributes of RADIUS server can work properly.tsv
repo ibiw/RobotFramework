@@ -1,0 +1,153 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_RADIUSServer	Add_RADIUSUser
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{put_data}	name=Auto_RADIUSServer2	server_uri_1=10.200.10.17	server_secret_1=fortinet2	port=1812	auth_type=ANY	#server_uri_2=	server_secret_2=	auth_type=ANY
+&{radius_name}	name=Auto_RADIUSServer1
+&{radius_ip1}	name=Auto_RADIUSServer1	server_uri_1=10.200.10.15
+&{radius_test}	name=Auto_RADIUSServer1	server_uri_1=10.200.10.15	server_secret_1=fortinet	port=1812	auth_type=ANY	username=test1	password=fortinet
+&{radius_port}	name=Auto_RADIUSServer1	port=1812
+&{radius_secret}	name=Auto_RADIUSServer1	server_secret_1=fortinet
+&{radius_ip2}	name=Auto_RADIUSServer1	server_uri_2=10.200.10.15	server_secret_2=fortinet
+&{radius_test2}	name=Auto_RADIUSServer1	server_uri_2=10.200.10.15	server_secret_2=fortinet	port=1812	auth_type=ANY	username=test1	password=fortinet
+&{radius_pap}	name=Auto_RADIUSServer1	auth_type=PAP
+&{radius_chap}	name=Auto_RADIUSServer1	auth_type=CHAP
+&{radius_msv2}	name=Auto_RADIUSServer1	auth_type=MSv2
+&{radius_nas}	name=Auto_RADIUSServer1	nas_ip=1.1.1.1
+
+
+&{request_data_RADIUS_user}	username=test1	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal RADIUS user	type=RADIUS	wildcard=True
+&{Auto_RADIUSuser1_credential_incorrect}	username=test1	password=fortinetfdsfsd
+&{Auto_RADIUSuser1_credential}	username=test1	password=fortinet
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Modify all attributes of the RADIUS server cluster
+	${ID}=	Search_Filter_ID	/api/v1/system/radius-server/	search=Auto_RADIUSServer1&name__exact=Auto_RADIUSServer1
+	Set Suite Variable	${ID}
+	PUT	/api/v1/system/radius-server/${ID}/	${put_data}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer2	server_uri_1=10.200.10.17	server_secret_1=fortinet2	auth_type=ANY
+
+002  View the modified RADIUS server cluster
+	GET	/api/v1/system/radius-server/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer2	server_uri_1=10.200.10.17	server_secret_1=fortinet2	auth_type=ANY
+
+003  Verify the the name of the RADIUS server cluster can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_name}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY
+
+004  Verify the modified RADIUS server name can be view
+	GET	/api/v1/system/radius-server/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	server_uri_1=10.200.10.17	server_secret_1=fortinet2	auth_type=ANY
+
+005  Verify the Server IP of 1st RADIUS server can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_ip1}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY	server_uri_1=10.200.10.15
+
+006  Verify the modified Server IP can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test}
+	Response Code Should Be	200
+
+007  Verify the Server Name of 1st RADIUS server can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_ip1}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY	server_uri_1=10.200.10.15
+
+008  Verify the modified server name of 1st RADIUS server can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test}
+	Response Code Should Be	200
+
+009  Verify the Port of 1st RADIUS server can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_port}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY	server_uri_1=10.200.10.15	port=${1812}
+
+010  Verify the modified port of 1st RADIUS can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test}
+	Response Code Should Be	200
+
+012  Verify the server secret of 1st RADIUS server can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_secret}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY	server_uri_1=10.200.10.15	server_secret_1=fortinet
+
+013  Verify the modified server secret of 1st RADIUS server can be modified
+	POST	/api/v1/system/radius-server/test/	${radius_test}
+	Response Code Should Be	200
+
+012  Verify the secondary server IP can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_ip2}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=ANY	server_uri_2=10.200.10.15
+
+013  Verify the modified secondary server IP can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test2}
+	Response Code Should Be	200
+
+014  Verify the Authentication Type can be modified to PAP
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_pap}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=PAP	server_uri_2=10.200.10.15
+
+015  Verify the Authentication Type-PAP can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test2}
+	Response Code Should Be	200
+
+016  Verify the Authentication Type can be modified to CHAP
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_chap}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=CHAP	server_uri_2=10.200.10.15
+
+017  Verify the Authentication Type-CHAP can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test2}
+	Response Code Should Be	200
+
+018  Verify the Authentication Type can be modified to MSv2
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_msv2}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=MSv2	server_uri_2=10.200.10.15
+
+019  Verify the Authentication Type-Msv2 can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test2}
+	Response Code Should Be	200
+
+020  Verify the NAS-IP can be modified
+	PATCH	/api/v1/system/radius-server/${ID}/	${radius_nas}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_RADIUSServer1	auth_type=MSv2	server_uri_2=10.200.10.15	nas_ip=1.1.1.1
+
+021  Verify the modified NAS-IP can work properly
+	POST	/api/v1/system/radius-server/test/	${radius_test2}
+	Response Code Should Be	200
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_RADIUSServer
+	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.10.16	server_secret_1=fortinet1
+
+Add_RADIUSUser
+	Create_User_On_Setup	/api/v1/system/user/	username=test1	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal RADIUS user	type=RADIUS	wildcard=True
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test1	username
+	Delete_On_Teardown	/api/v1/system/radius-server/	Auto_RADIUSServer1	name

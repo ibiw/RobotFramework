@@ -1,0 +1,66 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile_Username
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_data}	name=${Group_Name}	description=This is ${Group_Name}	variables={VIP_1: 1.1.1.1, DMZ: Port1}
+@{special_characters}	`	~	@	\#	$	%	^	&	*	(	)	+	=	;	'	:	,	.	/	<	>	?
+## character " will cause 500 error
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a group can be added by super user
+	POST	/api/v1/devices/group/	${request_data}
+	Response Code Should Be	201
+	${id}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+#	${result}	Create Dictionary	name=Test_Group_01	id=${id}	url=/api/v1/devices/group/${id}/	description=This is Test_Group_01
+#	Dictionary Should Contain Sub Dictionary	${resp.json()}	${result}
+	Response Should Contain Sub Dictionary	name=${Group_Name}	description=This is ${Group_Name}	id=${id}
+	Last Elog Sholud Contain	Adding device group (${Group_Name}) succeeded
+
+002  Verify a group can't be add when the name is same as the exist one
+	POST	/api/v1/devices/group/	${request_data}
+	Response Code Should Be	400
+	Response Should Contain String	The group with this name already exists
+	Last Elog Sholud Contain	Adding device group (${Group_Name}) failed, The group with this name already exists
+
+##{"name":"Test_Group-02", "description":"This is Test_Group-02", "variables":"This is a string"}
+##Need to confirm with dev
+003  Verify a group can't be add when the parameters are not in json format
+#	POST	/api/v1/devices/group/	{"name":"Test_Group-02", "description":"This is Test_Group-02", "variables":"{"VIP_1": "1.1.1.1", "DMZ": "Port1"}"}
+	POST	/api/v1/devices/group/	{"name":"Test_Group-02", "description":"This is Test_Group-02", "variables":"This is a string"}
+	Response Code Should Be	400
+	Response Should Contain String	Invalid variable string. Please input JSON format string
+
+004  Verify a group can't be add by a user who is unauthorized
+	Fetch_CM_Token	{"username":"none", "password":"fortinet"}
+	POST	/api/v1/devices/group/	${request_data}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action
+	Fetch_CM_Token
+
+005  Verify the group name can only contain letters, numbers, underscore(_) and hyphen(-)
+	:FOR	${item}	in	@{special_characters}
+		POST	/api/v1/devices/group/	{"name":"Test_Group-${item}", "description": "This is a group name with unsupported character"}
+		Response Code Should Be	400
+		Response Should Contain String	Invalid name string. The string contains only letters, numbers, underscores, and horizontal lines
+		Last Elog Sholud Contain	Invalid name string. The string contains only letters, numbers, underscores, and horizontal lines
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Local_User
+	Create_User_On_Setup	/api/v1/system/user/	username=fortiweb_qa	password=fortinet	comments=This is a normal local user
+
+Add_Profile_Username 
+	POST	/api/v1/system/profile/	{"name":"None", "priv":[{"items":[],"label":"Device Manager","name":"devices","descr":"Privilege to manage devices.","priv":"NONE"},{"items":[],"label":"Config Management","name":"config","descr":"Privilege to manage config files.","priv":"NONE"},{"items":[],"label":"Jobs","name":"jobs","descr":"Privilege to manage jobs.","priv":"NONE"},{"items":[],"label":"License","name":"licenses","descr":"Privilege to manage license.","priv":"NONE"},{"items":[],"label":"Log View","name":"logs","descr":"Privilege to manage Logs.","priv":"NONE"},{"items":[],"label":"System Settings","name":"system","descr":"Privilege to Config system settings.","priv":"NONE"}]}
+	${profile_id}	Search_Filter_ID	/api/v1/system/profile/	search=None&name__exact=None
+	POST	/api/v1/system/user/	{"username":"none", "password":"fortinet", "profile":${profile_id}}
+	Set Suite Variable	${profile_id}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/group/	${Group_Name}	name
+	Delete_On_Teardown	/api/v1/devices/group/	Test_Group-02	name
+	Delete_On_Teardown	/api/v1/system/user/	fortiweb_qa	username	#The last 'username' is search_key_name 
+	Delete_On_Teardown	/api/v1/system/user/	fortinet_qa	username
+	Delete_On_Teardown	/api/v1/system/user/	none	username
+	DELETE	/api/v1/system/profile/${profile_id}/

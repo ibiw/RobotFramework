@@ -1,0 +1,91 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create Backup Job
+...	Create Restore Job	Create Workflow Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Add a workflow job node
+
+	${JID}	Get_Job_ID	job_backup_config
+	Set Suite Variable	${JID}
+	${WJID}	Get_Workflow_Job_ID	workflow_1
+	Set Suite Variable	${WJID}
+	${Workflow_Node}	Create Dictionary	workflow_job_template=${WJID}	unified_job_template=${JID}
+	${node_id_1}	POST Fetch ID	/api/v1/jobs/workflow/node/	${Workflow_Node}
+	Set Suite Variable	${node_id_1}
+	Response Code Should Be	201
+
+002  Verify the success node can be created
+	${JID1}	Get_Job_ID	job_restore_config
+	Set Suite Variable	${JID1}
+	${Workflow_Node}	Create Dictionary	unified_job_template=${JID1}
+	Set Suite Variable	${Workflow_Node}
+	${node_id_2}	POST Fetch ID	/api/v1/jobs/workflow/node/${node_id_1}/success-node/	${Workflow_Node}
+	Set Suite Variable	${node_id_2}
+	Response Code Should Be	201
+	Response Should Contain Sub Dictionary	workflow_job_template=${WJID}	unified_job_template=${JID1}
+
+003  Verify the workflow job node's success node information can be get
+
+	GET	/api/v1/jobs/workflow/node/${node_id_1}/
+	Response Code Should Be	200
+	${node_2_list}	Create List	${node_id_2}
+	Response Should Contain Sub Dictionary	success_nodes=${node_2_list}
+
+004  Verify the success node's information can be get
+
+	GET	/api/v1/jobs/workflow/node/${node_id_1}/success-node/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"id":${${node_id_2}},"url":"/api/v1/jobs/workflow/node/${${node_id_2}}/"
+
+005  Verify the success node can be get
+	GET	/api/v1/jobs/workflow/node/${node_id_2}/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"id":${${node_id_2}},"url":"/api/v1/jobs/workflow/node/${${node_id_2}}/"
+
+006  Verify the non-exist workflowjob cannot be created a node
+
+	POST	/api/v1/jobs/workflow/node/12345/success-node/	${Workflow_Node}
+	Response Code Should Be	404
+	Response Should Contain Sub Dictionary	detail=Not found.
+
+007  Verify the non-exist job cannot added to workflow job
+
+	${Workflow_Node1}	Create Dictionary	unified_job_template=12345
+	POST	/api/v1/jobs/workflow/node/${WJID}/success-node/	${Workflow_Node1}
+	Response Code Should Be	404
+	Response Should Contain Sub Dictionary	detail=Not found.
+
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create Backup Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_backup_config	plugin=backup-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Create Restore Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_restore_config	plugin=restore-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Create Workflow Job
+	Create_On_Setup	/api/v1/jobs/workflow/	name=workflow_1	description=This is a workflow job
+
+Cleaning environments
+
+	Delete_On_Teardown	/api/v1/jobs/workflow/	workflow_1
+	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config
+	Delete_On_Teardown	/api/v1/jobs/job/	job_restore_config

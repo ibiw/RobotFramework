@@ -1,0 +1,28 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+${backup_file}	file/sendfile/fwbcm_bak_2018-07-24_18-49-19.gpg
+${backup_file_name_ver}	file/sendfile/fwbcm_bak_2018-07-24_18-49-19().gpg
+${backup_file_type_ver}	add_http_excep_Test.txt
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+#001  Verify the backup file name cannot contain special characters
+
+#	POST File	/api/v1/system/maintenance/restore/	${backup_file_name_ver}
+#	Response Code Should Be	400
+#	log	${resp.json()}	WARN
+#	Should Contain	${resp.content}	Importing license file ${license_file_name_ver[14:36]} failed
+
+#002  Verify the deleted license's is not exist
+#	GET	/api/v1/licenses/
+#	Response Code Should Be	200
+#	${resp}	Convert to String	${resp.json()}
+#	Should Not Contain	${resp}	${license_file_name2}
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

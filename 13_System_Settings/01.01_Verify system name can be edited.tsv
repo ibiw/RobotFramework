@@ -1,0 +1,26 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
+Suite Setup	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{System_Name_Mod}	name=FortiwebCM_new
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the System Name can be modified
+	POST	/api/v1/system/status/sysname/	${System_Name_Mod}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Editing system name succeeded.
+	Sleep	2
+	Last Elog Sholud Contain	Setting system name (FortiwebCM_new) succeeded
+
+002  Check the system name edited successs
+	SSH_Write	get system status
+	Check_SSH_Output	FortiwebCM_new
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+

@@ -1,0 +1,70 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile_and_User	Add_Groups
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+#&{unauth_headers}	Authorization=Token 7250797ab690614d5759486420eb1e46052001c4
+${unexist_ip}	1.2.3.4
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a device can be added by super user
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	Response Code Should Be	201
+	${did_1}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
+	${result}	Create Dictionary	name=${Device_Name}	id=${did_1}	group=${gid_1}	url=/api/v1/devices/device/${did_1}/
+	Dictionary Should Contain Sub Dictionary	${resp.json()}	${result}
+	Last Elog Sholud Contain	Adding device (${Device_Name}) succeeded
+
+002 Verify a duplicated device can't be added
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	Response Code Should Be	400
+	${result}=	Convert to String	${resp.json()}
+	Should Contain	${result}	Device already exist
+	Last Elog Sholud Contain	Adding device (${Device_Name}) failed, IP address (${Device_IPaddress}) already exists
+
+003 Verify a device can't be added by an unauthorized user
+	Fetch_CM_Token	{"username":"none", "password":"fortinet"}
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	Response Code Should Be	403
+	${result}=	Convert to String	${resp.json()}
+	Should Contain	${result}	You do not have permission to perform this action
+	Fetch_CM_Token
+
+004  Verify the device can't be add when the network is unreachable
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${unexist_ip}", "group":"${gid_1}"}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to reach ${unexist_ip}
+	Last Elog Sholud Contain	Adding device (${Device_Name}) failed. Failed to reach ${unexist_ip}
+
+005  Verify the CM can only add 2 devices when use trail license
+	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}"}
+	Response Code Should Be	201
+	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}"}
+	Response Code Should Be	400
+	Response Should Contain String	The device number has reached the license's limit
+	Last Elog Sholud Contain	Adding device (${Device_Name2}) failed, device number has reached the license's limit
+
+## ??002
+006  Verify that the CM can't add two devices with same license SN
+	log to Console	${\n}--Run it with manual test.
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Profile_and_User
+	POST	/api/v1/system/profile/	{"name":"None", "priv":[{"items":[],"label":"Device Manager","name":"devices","descr":"Privilege to manage devices.","priv":"NONE"},{"items":[],"label":"Config Management","name":"config","descr":"Privilege to manage config files.","priv":"NONE"},{"items":[],"label":"Jobs","name":"jobs","descr":"Privilege to manage jobs.","priv":"NONE"},{"items":[],"label":"License","name":"licenses","descr":"Privilege to manage license.","priv":"NONE"},{"items":[],"label":"Log View","name":"logs","descr":"Privilege to manage Logs.","priv":"NONE"},{"items":[],"label":"System Settings","name":"system","descr":"Privilege to Config system settings.","priv":"NONE"}]}
+	${profile_id}	Search_Filter_ID	/api/v1/system/profile/	search=None&name__exact=None
+	POST	/api/v1/system/user/	{"username":"none", "password":"fortinet", "profile":${profile_id}}
+	Set Suite Variable	${profile_id}
+
+Add_Groups
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	Set Suite Variable	${gid_1}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name2}	name
+	DELETE	/api/v1/devices/group/${gid_1}/
+	Delete_On_Teardown	/api/v1/system/user/	none	username
+	DELETE	/api/v1/system/profile/${profile_id}/

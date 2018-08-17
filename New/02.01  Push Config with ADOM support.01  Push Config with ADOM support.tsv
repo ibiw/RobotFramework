@@ -1,0 +1,101 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+@{int_validation}	x	中文
+${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+
+###	root@fortiwebcm:/var/log/fwbcm# pwd
+###	/var/log/fwbcm
+###	root@fortiwebcm:/var/log/fwbcm# tail -F celery-beat.log
+###	root@fortiwebcm:/var/log/fwbcm# grep clean_expire_rec_files *
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+## Failed. When push config, it does not recognized the Administrative Doma has been enabled
+## No config need to push!
+001  Verify the ADOM enabled setting can be pushed
+
+## Failed with No config need to push!
+002  Verify the new added ADOM can be pushed
+
+## Failed with {"detail":"Push successfully."}
+## Configuration push for device (d1) succeeded
+003  Verify the ADOM disabled setting can be pushed
+
+004  Verify the ADOM Enable and new added ADOM can be can be pushed together
+
+005  When push ADOM config, 
+## can :)
+
+005  Verify the new ADOM server policy can be pushed
+
+## unsupported
+006  Verify delete the new added ADOM server policy can be pushed
+
+007  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
+
+008  Verify tge ADOM Names can only support 11 characters
+
+009  Verify the root VDOM config can still be pushed
+
+010  
+
+301  Verify the empty data will not cause any isue
+	POST	/api/v1/system/maintenance/clean/	{"entries":[{}, {}, {}]}
+	Response Code Should Be	200
+	Last Elog Sholud Contain	Setting Clean Entries succeeded
+	GET	/api/v1/system/maintenance/clean/
+	Response Code Should Be	200
+	${get_data}	Set Variable	${resp.json()}
+	Log to Console	${\n}--${get_data}
+	Should Be True	0	Get length	${get_data}
+
+666  Verify the empty data will not cause any isue
+	:FOR 	${int}	IN RANGE	1	9
+		POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":"${int}","name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
+
+888  Run Jobs
+	:FOR 	${int}	IN RANGE	1	9
+		POST	/api/v1/jobs/job/1/launch/
+
+999  Push Config
+	Push_Config
+## 1 Modify FWB1
+## 2 Initialize in config management--Pull the config from the selected FWB-FWB1
+## 3 Push config from FWB1 to FWB2
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Push_Config
+	PUT	/api/v1/config/config-setting/	{"group":34,"system":1,"user":0,"server_policy":0,"waf":1,"log":0}
+	Response Code Should Be	200
+	Sleep	1
+
+	POST	/api/v1/config/sync-config/	{"device":32}
+	Response Code Should Be	200
+	Sleep	70
+
+	POST	/api/v1/config/group-config/	{"group":34}
+	Response Code Should Be	200
+	Sleep	20
+
+#	POST	/api/v1/config/config-precheck/
+#	Response Code Should Be	200
+#	Sleep	20
+
+	POST	/api/v1/config/config-check/	{"group":34}
+	Response Code Should Be	200
+	Sleep	50
+
+	POST	/api/v1/config/push-config/	{"group":34}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Push successfully.
+	Sleep	30
+
+
+Cleaning environments
+#	POST	/api/v1/system/maintenance/clean/	{"entries":${back_data}}
+#	POST	/api/v1/system/maintenance/clean/	${data}
+	Sleep	1

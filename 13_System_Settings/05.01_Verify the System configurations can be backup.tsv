@@ -1,0 +1,41 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{password}	password=111111
+&{password_empty}	password=
+&{password_characters}	password=~!@#$%^&*()_+{}:|<>?-=[]';,./
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+001  Verify the System configurations can be backup with password
+
+	POST	/api/v1/system/maintenance/backup/	${password}
+	Response Code Should Be	200
+	Sleep	10
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	System backup succeeded
+
+003  Verify the System configurations can be backup without input password
+	POST	/api/v1/system/maintenance/backup/	${password_empty}
+	Response Code Should Be	200
+	Sleep	10
+
+004  Verify the Elog can record correct
+	Last Elog Sholud Contain	System backup succeeded
+
+005  Verify the System configurations can be backup with special characters
+
+	POST	/api/v1/system/maintenance/backup/	${password_characters}
+	Response Code Should Be	200
+	Sleep	10
+
+006  Verify the Elog can record correct
+	Last Elog Sholud Contain	System backup succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

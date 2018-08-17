@@ -1,0 +1,40 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the system event log can be get
+
+	GET	/api/v1/system/elog/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	count
+	Response Should Contain Sub Dictionary	next=/api/v1/system/elog/?page=2
+#	Should Contain	${resp.content}	"next":"/api/v1/system/elog/?page=2"
+
+002  Verify the system event log can be get any page
+
+	GET	/api/v1/system/elog/?page=2
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	previous=/api/v1/system/elog/?page=1
+	Response Should Contain Sub Dictionary	next=/api/v1/system/elog/?page=3
+
+
+003  Verify the system event log can not get a non-exist page
+
+	GET	/api/v1/system/elog/?page=3333333
+	Response Code Should Be	404
+	Response Should Contain Sub Dictionary	detail=Invalid page.
+
+004  Verify the system event log can filter by some conditions
+
+	GET	/api/v1/system/elog/?filter=%5B%7B%22id%22:%22msg%22,%22value%22:%5B%22Invalid+time+format.%22%5D%7D,%7B%22id%22:%22priority%22,%22value%22:%5B%22Error%22%5D%7D%5D&log_type=formatted&page=1&page_size=100
+	Response Code Should Be	200
+	Should Contain	${resp.content}	count
+	Should Contain	${resp.content}	"msg":"Invalid time format."
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

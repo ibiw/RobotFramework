@@ -1,0 +1,66 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the plugin names can be get
+
+	GET	/api/v1/jobs/plugin/list/
+	Response Code Should Be	200
+	${plugin_list}	Create List	apply-license-to-fortiweb	backup-config-for-fortiweb
+	...	install-config-using-restfulapi	push-command-file-to-fortiweb	push-command-to-fortiweb	reclaim-license
+	...	restore-config-for-fortiweb
+	Response Should Contain Sub Dictionary	name=${plugin_list}
+
+002  Verify the plugin option can be get
+	GET	/api/v1/jobs/plugin/options/?plugin=install-config-using-restfulapi
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"URL"
+	Should Contain	${resp.content}	"data"
+	Should Contain	${resp.content}	"method"
+
+	GET	/api/v1/jobs/plugin/options/?plugin=push-command-file-to-fortiweb
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"force"
+	Should Contain	${resp.content}	"load_type"
+	Should Contain	${resp.content}	"config_file"
+
+	GET	/api/v1/jobs/plugin/options/?plugin=push-command-to-fortiweb
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"force"
+	Should Contain	${resp.content}	"load_type"
+	Should Contain	${resp.content}	"config"
+
+003  Verify the plugin description can be get
+
+	GET	/api/v1/jobs/plugin/description/?plugin="install-config-using-restfulapi"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="push-command-file-to-fortiweb"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="push-command-to-fortiweb"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="apply-license-to-fortiweb"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="backup-config-for-fortiweb"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="reclaim-license"
+	Response Code Should Be	200
+	GET	/api/v1/jobs/plugin/description/?plugin="restore-config-for-fortiweb"
+	Response Code Should Be	200
+
+004  Verify the plugins description can be get
+
+	GET	/api/v1/jobs/plugin/
+	Response Code Should Be	200
+
+005  Verify the plugin Version  can be get
+
+	GET	/api/v1/system/plugin-version/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	version=${plugin_version}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

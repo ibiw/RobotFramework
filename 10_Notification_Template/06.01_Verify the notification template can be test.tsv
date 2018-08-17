@@ -1,0 +1,24 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Run Keywords	Fetch_CM_Token	Create_Notification
+#Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{Notification_Config_data}	name=notification_a	notification_type=${Notification_Type}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+#001  Verify the notification template details can be tested
+#	POST	/api/v1/system/notification/${ID}/test/
+#	Response Code Should Be	202
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create_Notification
+	Convert_port_recipient_Integer	${Notification_Config_data}
+	Create_On_Setup	/api/v1/system/notification/
+	...	name=notification_a	notification_type=${Notification_Type}
+	...	notification_configuration=${Notification_Config}
+
+Cleaning environments
+	DELETE	/api/v1/system/notification/${ID}/
+	Response Code Should Be	204

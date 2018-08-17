@@ -1,0 +1,50 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile_and_User	Add_Groups	Add_Devices
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the devices information can't be update by an unautorized user
+	Fetch_CM_Token	{"username":"none", "password":"fortinet"}
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action
+	Fetch_CM_Token
+
+002  Verify the devices information can't be update when the network unreachable
+	${CM_IP_Backup}	Set Variable	${CM_IP}
+	Set Suite Variable	${CM_IP_Backup}
+	Set Global Variable	${CM_IP}	10.200.1.1
+	Run Keyword And Expect Error	ConnectionError:*	PUT	/api/v1/devices/device/update/	{}
+	Set Global Variable	${CM_IP}	${CM_IP_Backup}
+
+003  Verify the devices information can be update
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Response Should Contain String	Update all devices status successfully
+	Last Elog Sholud Contain	Updating all devices succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Profile_and_User
+	POST	/api/v1/system/profile/	{"name":"None", "priv":[{"items":[],"label":"Device Manager","name":"devices","descr":"Privilege to manage devices.","priv":"NONE"},{"items":[],"label":"Config Management","name":"config","descr":"Privilege to manage config files.","priv":"NONE"},{"items":[],"label":"Jobs","name":"jobs","descr":"Privilege to manage jobs.","priv":"NONE"},{"items":[],"label":"License","name":"licenses","descr":"Privilege to manage license.","priv":"NONE"},{"items":[],"label":"Log View","name":"logs","descr":"Privilege to manage Logs.","priv":"NONE"},{"items":[],"label":"System Settings","name":"system","descr":"Privilege to Config system settings.","priv":"NONE"}]}
+	${profile_id}	Search_Filter_ID	/api/v1/system/profile/	search=None&name__exact=None
+	POST	/api/v1/system/user/	{"username":"none", "password":"fortinet", "profile":${profile_id}}
+	Set Suite Variable	${profile_id}
+
+Add_Groups
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	Set Suite Variable	${gid_1}
+
+Add_Devices
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
+	DELETE	/api/v1/devices/group/${gid_1}/
+	Delete_On_Teardown	/api/v1/system/user/	none	username
+	DELETE	/api/v1/system/profile/${profile_id}/

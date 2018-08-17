@@ -1,0 +1,86 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Get_Group_ID
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_job_data}	name=job_backup_config_manual	plugin=backup-config-for-fortiweb
+&{request_job_data_miss_device}	name=job_missing_device	plugin=backup-config-for-fortiweb	description=This_is_description_of_this_job
+&{request_job_data_miss_plugin}	name=job_missing_plugin	description=This_is_description_of_this_job
+&{missing_para_plugin_option}	load_type=add	force=${true}
+&{config_file_non_exist_option}	load_type=add	config_file=default/12314asdf.conf	force=${true}
+&{request_job_data_missing_plugin_option}	name=job_missing_plugin_option	plugin=push-command-file-to-fortiweb	description="This is description of this job"	plugin_option=${missing_para_plugin_option}
+&{request_job_data_missing_plugin_option1}	name=job_config_file_non_exist	plugin=push-command-file-to-fortiweb	description="This is description of this job"	plugin_option=${config_file_non_exist_option}
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the job can be manual launched
+	Set to Dictionary	${request_job_data}	device	${Device_List}
+	${Job_Event_ID}	POST Fetch Job ID	/api/v1/jobs/job/manual-launch/	${request_job_data}
+	Set Suite Variable	${Job_Event_ID}
+	Response Code Should Be	200
+	Sleep	30
+	Last Elog Sholud Contain	Launching job (job_backup_config_manual) succeeded
+
+002  Verify the job launched successfully
+	GET	/api/v1/jobs/job/event/${Job_Event_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID}	name=job_backup_config_manual	device=${Device_List}
+	Should Contain	${resp.content}	failed=0
+	Should Contain	${resp.content}	ok=3
+	Should Contain	${resp.content}	changed=1
+
+003  Verify the group's device can be manual launched
+
+	${request_job_data1}	Create Dictionary	name=job_backup_config_manual_group	plugin=backup-config-for-fortiweb	device=${Group_List}
+	POST	/api/v1/jobs/job/manual-launch/	${request_job_data1}
+	Response Code Should Be	200
+	Sleep	30
+	${Job_Event_ID1}=	Get_Job_Event_ID	job_backup_config_manual_group
+	Set Suite Variable	${Job_Event_ID1}
+
+	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID1}	name=job_backup_config_manual_group	device=${Group_List}
+	Should Contain	${resp.content}	failed=0
+	Should Contain	${resp.content}	ok=3
+	Should Contain	${resp.content}	changed=1
+
+004  Verify if missing device/group parameter , the job can be launched
+
+	${JID}	POST Fetch ID	/api/v1/jobs/job/manual-launch/	${request_job_data_miss_device}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=no device found
+
+005  Verify if missing plugin parameter , the job cannot be launched
+
+	Set to Dictionary	${request_job_data_miss_plugin}	device	${Device_List}
+	POST	/api/v1/jobs/job/manual-launch/	${request_job_data_miss_plugin}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=no plugin found
+
+006  Verify if missing neccessary plugin option parameter, the job cannot be launched
+
+	Set to Dictionary	${request_job_data_missing_plugin_option}	device	${Device_List}
+	POST	/api/v1/jobs/job/manual-launch/	${request_job_data_missing_plugin_option}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=plugin option (config_file) missing
+
+007  Verify if neccessary config file is not exist, the job cannot be launched
+
+	Set to Dictionary	${request_job_data_missing_plugin_option1}	device	${Device_List}
+	POST	/api/v1/jobs/job/manual-launch/	${request_job_data_missing_plugin_option1}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=config file not existing
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/event/	job_backup_config_manual
+	Delete_On_Teardown	/api/v1/jobs/job/event/	job_backup_config_manual_group

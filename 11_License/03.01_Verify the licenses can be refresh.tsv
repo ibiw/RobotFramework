@@ -1,0 +1,21 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Upload License
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the licenses can be refreshed
+	POST	/api/v1/licenses/refresh/
+	Response Code Should Be	200
+	Sleep	5
+	Response Should Contain Sub Dictionary	detail=License refresh succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Upload License
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file1}
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name2}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file2}

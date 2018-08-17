@@ -1,0 +1,39 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{request_job_data}	name=job_push_config_directly	plugin=push-command-to-fortiweb	description="This is description of this job"	plugin_option=${Job_Plugin_push_config_directly_Option}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a push-config-directly job with plugin option can be added by super user
+	Set to Dictionary	${request_job_data}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data}
+	Response Code Should Be	201
+	${Job_ID}=	Get_Job_ID	job_push_config_directly
+	Set Suite Variable	${Job_ID}
+	Response Should Contain Sub Dictionary
+	...	name=job_push_config_directly	id=${Job_ID}	url=/api/v1/jobs/job/${Job_ID}/
+	...	plugin=push-command-to-fortiweb
+	Response Should Contain Sub Dictionary	device=${Device_List}
+	${resp}=	Convert to String	${resp.json()}
+	Should Contain	${resp}	${Job_Plugin_push_config_directly_Option_view}
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	Job (job_push_config_directly) creation succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_directly
+	Response Code Should Be	204

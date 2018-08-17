@@ -1,0 +1,43 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_Job_For_View	Create_Second_Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001 Verify job list can be view by super user
+	GET	/api/v1/jobs/job/?search=test
+	Response Code Should Be	200
+	Should Contain	${resp.content}	testjob
+	Should Contain	${resp.content}	testjob_modify
+	Should Contain	${resp.content}	install-config-using-restfulapi
+	Should Contain	${resp.content}	"This is description of this job"
+	Should Contain	${resp.content}	"This is description of testjob1_modify"
+	${resp}=	Convert to String	${resp.json()}
+	Should Contain	${resp}	${Job_View_Plugin_view_Mod1}
+	Should Contain	${resp}	${Job_View_Plugin_view_Mod2}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_Job_For_View
+	Create_On_Setup	/api/v1/jobs/job/
+	...	name=testjob	plugin=backup-config-for-fortiweb
+	...	description="This is description of this job"	device=${Device_List}
+
+Create_Second_Job
+	Create_Another_Job	testjob_modify	install-config-using-restfulapi	${Job_Plugin_Option_Mod}	${Device_List}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/	testjob
+	Response Code Should Be	204
+	Delete_On_Teardown	/api/v1/jobs/job/	testjob_modify
+	Response Code Should Be	204

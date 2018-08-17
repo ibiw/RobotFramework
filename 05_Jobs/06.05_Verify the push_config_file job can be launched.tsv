@@ -1,0 +1,78 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_Config_File	Create Push_Config_File Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the push config file job can be launched
+	${JID}=	Get_Job_ID	job_push_config_file
+	Set Suite Variable	${JID}
+	${Job_Event_ID}	POST Fetch Job ID	/api/v1/jobs/job/${JID}/launch/	extra_vars
+	Response Code Should Be	200
+	Set Suite Variable	${Job_Event_ID}
+
+002  Verify the job launched successfully
+	Sleep	70
+	Last Elog Sholud Contain	Launching job (job_push_config_file) succeeded
+	GET	/api/v1/jobs/job/event/${Job_Event_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID}	name=job_push_config_file	device=${Device_List}
+	Check The Job Launch Successfully
+
+003  Check the pushed config on FWB CLI
+	SSH_Write	show server-policy vserver Demo_Vserver_05
+	Check_SSH_Output	set vip 172.1.1.1/32
+	SSH_Write	show server-policy server-pool Demo_ServerPool_05
+	Check_SSH_Output	set ip 172.2.2.2
+
+004  Verify the force parameter is worked 
+
+	${JID1}=	Get_Job_ID	job_push_config_file_error
+	${Job_Event_ID1}	POST Fetch Job ID	/api/v1/jobs/job/${JID1}/launch/	extra_vars
+	Response Code Should Be	200
+	Set Suite Variable	${Job_Event_ID1}
+	Sleep	60
+	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID1}	name=job_push_config_file_error	device=${Device_List}
+	Should Contain	${resp.content}	Configuration Rollback Successfully, Excute Command take error.
+
+005  Check the command has not been deployed to fortiweb device
+	SSH_Write	show server-policy vserver Demo_Vserver_06
+	Check_SSH_Output	Entry 'Demo_Vserver_06' is not found!
+	SSH_Write	show server-policy server-pool Demo_ServerPool_06
+	Check_SSH_Output	Entry 'Demo_ServerPool_06' is not found!
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_Config_File
+	Create_File_On_Setup	/api/v1/jobs/config-file/	type=file	name=default/job_test.conf	content=${File_Content}
+	Create_File_On_Setup	/api/v1/jobs/config-file/	type=file	name=default/job_test_error.conf	content=${File_Content_error}
+Create Push_Config_File Job
+	${Job_Plugin_push_config_file_Option}	Create Dictionary	load_type=add	config_file=default/job_test.conf	force=${true}
+	Create_On_Setup	/api/v1/jobs/job/	name=job_push_config_file	plugin=push-command-file-to-fortiweb
+	...	description="This is description of this job"	plugin_option=${Job_Plugin_push_config_file_Option}	device=${Device_List}
+
+	${Job_Plugin_push_config_file_Option_error}	Create Dictionary	load_type=add	config_file=default/job_test_error.conf	force=${false}
+	Create_On_Setup	/api/v1/jobs/job/	name=job_push_config_file_error	plugin=push-command-file-to-fortiweb
+	...	description="This is description of this job"	plugin_option=${Job_Plugin_push_config_file_Option_error}	device=${Device_List}
+
+Cleaning environments
+	SSH_Write
+	...	config server-policy vserver	delete Demo_Vserver_05	end
+	...	config server-policy server-pool	delete Demo_ServerPool_05	end
+
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_file
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_file_error
+	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test.conf
+	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test_error.conf

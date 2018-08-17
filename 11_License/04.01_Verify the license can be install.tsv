@@ -1,0 +1,56 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource_non_end.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Delete FWB3	Create Group	Create Device	Upload License
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the licenses can be installed
+	${Device_Dic}	Create Dictionary	device_id=${Device_ID}
+	${Device_Dic}	Create List	${Device_Dic}
+	${Device_Dictionary}	Create Dictionary	device=${Device_Dic}
+	${result1}	SSH_Write2	get system status
+	Set Suite Variable	${result1}
+	POST	/api/v1/licenses/install/	${Device_Dictionary}
+	Response Code Should Be	200
+	Run Keyword If	'FVVM00UNLICENSED' == '${result1[93:109]}'	Sleep	60
+	Run Keyword If	'${license_file_Name1}' == '${result1[93:109]}'	Sleep	10
+	Response Should Contain Sub Dictionary	detail=Installing license succeeded
+
+002  Verify the license's status changed
+	GET	/api/v1/licenses/?search=${license_file_Name1}
+	Response Code Should Be	200
+#	Response Should Contain Sub Dictionary	status=used
+	Should Contain	${resp.content}	"status":"used"
+
+003  Verify the Elog can record correct
+
+	Run Keyword If	'FVVM00UNLICENSED' == '${result1[93:109]}'	Last Elog Sholud Contain	Installing license for device (${Device_Name2}) succeeded. Installed license: ${license_file1[14:30]}. License status changed from free to used
+	Run Keyword If	'${license_file_Name1}' == '${result1[93:109]}'	Last Elog Sholud Contain	Installing license for device (${Device_Name2}) failed. License ${license_file_Name1} in device ${Device_Name2} is still valid
+
+004  Check the license applied on FWB
+	SSH_Write2	get system status
+	Check_SSH_Output_Not_Contain	FVVM00UNLICENSED
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Delete FWB3
+	${FWB3ID}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name3}
+	Run Keyword If	${FWB3ID} != -1	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name3}
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name2}	username=${Device_Username2}
+	...	password=${Device_Password2}	ipaddress=${Device_IPaddress2}	variables=${Device_Variables2}	group=${ID}
+	${Device_ID}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name2}&name__exact=${Device_Name2}
+	Set Suite Variable	${Device_ID}
+
+Upload License
+
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file1}

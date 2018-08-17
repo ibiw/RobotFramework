@@ -1,0 +1,117 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Radius_User	Add_RadiusServer	Add_RadiusServer2	Add_LDAPServer	Add_Profile
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${priv_file}	file/sendfile/readwrite_profile.txt
+&{username_exist}	username=admin
+&{username_valid}	username=test2	type=Radius
+&{user_password}	username=test2	password=fortinet
+&{user_profile}	username=test2	profile=1	type=Radius
+&{user_comments}	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	type=Radius
+&{user_LDAP}	username=test2	type=LDAP	server=Auto_LDAPServer1
+&{LDAP_for_test}	username=test1	password=fortinet
+&{user_LOCAL}	username=test2	type=Local
+&{fortiweb_qa_credential}	username=fortiweb_qa	password=fortinet
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Find the profile id and prepare the data for PUT method
+	${id}=	Search_Filter_ID	/api/v1/system/profile/	search=readwrite_profile&name__exact=readwrite_profile
+	${request_data}	Create Dictionary	username=test2	password=123456	comments=This is a normal Radius user2	profile=${id}	type=Radius	server=Auto_RadiusServer2
+	Set Suite Variable	${request_data}
+
+002  Verify admin can use PUT method to modify all attributes of the Radius user
+	PUT	/api/v1/system/user/${User_ID}/	${request_data}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=This is a normal Radius user2	profile=${id}	type=Radius	server=Auto_RadiusServer2
+
+003  Verify admin can't modify the user's name to a exist one
+	PATCH	/api/v1/system/user/${User_ID}/	${username_exist}
+	Response Code Should Be	400
+	Response Should Contain String	A user with that username already exists
+
+004  Verify admin can use PATCH method to modify the user's name
+	PATCH	/api/v1/system/user/${User_ID}/	${username_valid}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=This is a normal Radius user2	profile=${id}	type=Radius	server=Auto_RadiusServer2
+
+005  Verify admin can use PATCH method to modify the user's password
+	PATCH	/api/v1/system/user/${User_ID}/	${user_password}
+	Response Code Should Be	200
+
+006  Verify admin can use PATCH method to modify the user's profile
+	PATCH	/api/v1/system/user/${User_ID}/	${user_profile}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=This is a normal Radius user2	profile=${1}	type=Radius	server=Auto_RadiusServer2
+
+
+007  Verify admin can use PATCH method to modify the user's comments to 1024 characters
+	PATCH	/api/v1/system/user/${User_ID}/	${user_comments}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=Radius	server=Auto_RadiusServer2
+
+008  Verify the user's attributes can be view
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=Radius	server=Auto_RadiusServer2
+
+009  Verify admin can use PATCH method to change a Radius user to a LDAP user
+	PATCH	/api/v1/system/user/${User_ID}/	${user_LDAP}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=LDAP	server=Auto_LDAPServer1
+
+010  Verify the modified LDAP user's attributes can be view
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=LDAP	server=Auto_LDAPServer1
+
+011  Find the LDAP Server id and prepare the data for test the connection
+	${id}=	Search_Filter_ID	/api/v1/system/ldap-server/	search=Auto_LDAPServer1&name__exact=Auto_LDAPServer1
+	Set Suite Variable	${id}
+
+012  Verify the use the modified LDAP user's credential to test the LDAP server
+	POST	/api/v1/system/ldap-server/${id}/test/	${LDAP_for_test}
+	Response Code Should Be	200
+
+013  Verify admin can use PATCH method to change Radius user to a local user
+	PATCH	/api/v1/system/user/${User_ID}/	${user_LOCAL}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=Local
+
+014  Verify the modified local user's attributes can be view
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	username=test2	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu	profile=${1}	type=Local
+
+015  Verify use the modified local user can login
+	POST	/api/v1/auth-tokens/	${user_password}
+	Response Code Should Be	200
+	Response Should Contain Key	expires
+	Response Should Contain Key	token
+	Last Elog Sholud Contain	User (test2) with profile (SystemAdmin) logged in from API
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Radius_User
+	Create_User_On_Setup	/api/v1/system/user/	username=test1	password=fortinet1	comments=This is a normal Radius user	type=Radius	server=Auto_RadiusServer1
+
+Add_RadiusServer
+	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RadiusServer1	server_uri_1=10.200.10.15	server_secret_1=fortinet
+
+Add_RadiusServer2
+	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RadiusServer2	server_uri_1=10.200.10.15	server_secret_1=fortinet
+
+Add_LDAPServer
+	Create_On_Setup	/api/v1/system/ldap-server/	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn
+
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${priv_file}	name=readwrite_profile
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test2	username
+	Delete_On_Teardown	/api/v1/system/profile/	readwrite_profile	name
+	Delete_On_Teardown	/api/v1/system/radius-server/	Auto_RadiusServer1	name
+	Delete_On_Teardown	/api/v1/system/radius-server/	Auto_RadiusServer2	name
+	Delete_On_Teardown	/api/v1/system/ldap-server/	Auto_LDAPServer1	name

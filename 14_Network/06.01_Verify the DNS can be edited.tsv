@@ -1,0 +1,56 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{dns_primary_wrong_ip_format}	serv1=1111.1.1.1	serv2=
+&{dns_secondary_wrong_ip_format}	serv1=11.1.1.1	serv2=1.1.1.1.1
+&{dns_missing_primary}	serv1=	serv2=1.1.1.1
+&{dns_data}	serv1=8.8.8.8	serv2=1.1.1.1
+&{dns_delete_secondary}	serv1=8.8.8.8	serv2=
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+001  Verify the wrong ip format cannot be edited to primary DNS server
+
+	PUT	/api/v1/system/network/dns/	${dns_primary_wrong_ip_format}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing DNS failed, Primary DNS server IP invalid
+	Last Elog Sholud Contain	Editing DNS failed, Primary DNS server IP invalid
+
+002  Verify the wrong ip format cannot be edited to secondary DNS server
+	PUT	/api/v1/system/network/dns/	${dns_secondary_wrong_ip_format}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing DNS failed, Secondary DNS server IP invalid
+	Last Elog Sholud Contain	Editing DNS failed, Secondary DNS server IP invalid
+
+003  Verify the primary DNS is a necessary parameter
+	PUT	/api/v1/system/network/dns/	${dns_missing_primary}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing DNS failed, primary DNS server missing
+	Last Elog Sholud Contain	Editing DNS failed, primary DNS server missing
+
+004  Verify the DNS server can be edited
+
+	PUT	/api/v1/system/network/dns/	${dns_data}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Editing DNS succeeded
+	Last Elog Sholud Contain	Editing DNS succeeded
+	GET	/api/v1/system/network/dns/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	{"id":1,"server":"8.8.8.8"},{"id":2,"server":"1.1.1.1"}
+
+005  Verify the secondary DNS server can be deleted
+	PUT	/api/v1/system/network/dns/	${dns_delete_secondary}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Editing DNS succeeded
+	Last Elog Sholud Contain	Editing DNS succeeded
+	GET	/api/v1/system/network/dns/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	{"id":1,"server":"8.8.8.8"},{"id":2,"server":"0.0.0.0"}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

@@ -1,0 +1,59 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+${license_file_name_ver}	file/sendfile/FVVM080000145634().lic
+${license_file_type_ver}	file/sendfile/add_http_excep_Test.txt
+${license_file_non-exist}	file/sendfile/alskdjflkasjfasdff.txt
+${license_empty_file}	file/sendfile/empty_license.lic
+&{unauthorized_head}	Authorization=token bab9113be6d6e4f6fe2352b7df3c26105fce34d	Content-Type=application/json
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001 Verify the unauthorized user cannot delete license
+
+	POST File	/api/v1/licenses/	${license_file}	${unauthorized_head}
+	Response Code Should Be	401
+	Should Contain	${resp.content}	Invalid token
+
+002  Verify the empty license file cannot be upload
+
+	POST File	/api/v1/licenses/	${license_empty_file}
+	Response Code Should Be	400
+	Should Contain	${resp.content}	Importing license file empty_license.lic failed, license file is empty
+
+003  Verify the license file name cannot contain special characters
+	POST File	/api/v1/licenses/	${license_file_name_ver}
+	Response Code Should Be	400
+	Should Contain	${resp.content}	Importing license file ${license_file_name_ver[14:36]} failed
+
+004  Verify the Elog can record correct
+	Last Elog Sholud Contain	Importing license file ${license_file_name_ver[14:36]} failed
+
+005  Verify the license file type can be verified
+	POST File	/api/v1/licenses/	${license_file_type_ver}
+	Response Code Should Be	400
+	Should Contain	${resp.content}	License type is error
+
+006  Verify the Elog can record correct
+	Last Elog Sholud Contain	License type is error
+
+007  Verify the license can be upload
+
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file1}
+	Response Code Should Be	201
+	GET	/api/v1/licenses/
+	Response Code Should Be	200
+	Should Contain	${resp.content}	${license_file1[14:30]}
+
+008  Verify the Elog can record correct
+	Last Elog Sholud Contain	Importing license file (${license_file1[14:36]}) succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/licenses/	${license_file_Name1}

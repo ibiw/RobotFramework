@@ -1,0 +1,75 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${readwrite_profile}	file/sendfile/readwrite_profile.txt
+${readonly_profile}	file/sendfile/readonly_profile.txt
+${none_profile}	file/sendfile/nonepriv_profile.txt
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the profile with same name as the exist profile can't be added
+	POST JSON	/api/v1/system/profile/	${readwrite_profile}
+	Response Code Should Be	400
+	Response Should Contain String	Profile with this name already exists.
+
+002  Verify the profile can be view
+	GET	/api/v1/system/profile/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readwrite_profile
+
+003  Verify the profile with Read-Only priviledge of all modules can be created
+	POST JSON	/api/v1/system/profile/	${readonly_profile}
+	Response Code Should Be	201
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile
+
+004  Verify the profile can be view
+	${id1}=	Search_Filter_ID	/api/v1/system/profile/	search=readonly_profile&name__exact=readonly_profile
+	Set Suite Variable	${id1}
+	GET	/api/v1/system/profile/${id1}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile
+
+005  Verify the profile with None priviledge of all modules can be created
+	POST JSON	/api/v1/system/profile/	${none_profile}
+	Response Code Should Be	201
+	Response Should Contain Sub Dictionary
+	...	name=nonepriv_profile
+
+006  Verify the profile can be view
+	${id2}=	Search_Filter_ID	/api/v1/system/profile/	search=nonepriv_profile&name__exact=nonepriv_profile
+	Set Suite Variable	${id2}
+	GET	/api/v1/system/profile/${id2}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=nonepriv_profile
+
+007  Verify the profile with Read-Write priviledge can be delete
+	DELETE	/api/v1/system/profile/${id}/
+	Response Code Should Be	204
+
+008  Verify the profile with Read-Only priviledge can be delete
+	DELETE	/api/v1/system/profile/${id1}/
+	Response Code Should Be	204
+
+009  Verify the profile with None priviledge can be delete
+	DELETE	/api/v1/system/profile/${id2}/
+	Response Code Should Be	204
+
+
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${readwrite_profile}	name=readwrite_profile
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/profile/	readwrite_profile	name
+	Delete_On_Teardown	/api/v1/system/profile/	readonly_profile	name
+	Delete_On_Teardown	/api/v1/system/profile/	nonepriv_profile	name

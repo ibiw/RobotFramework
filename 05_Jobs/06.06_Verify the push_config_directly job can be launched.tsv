@@ -1,0 +1,71 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create Push_Config_Dir Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the push config directly job can be launched
+	${JID}=	Get_Job_ID	job_push_config_directly
+	Set Suite Variable	${JID}
+	${Job_Event_ID}	POST Fetch Job ID	/api/v1/jobs/job/${JID}/launch/	extra_vars
+	Response Code Should Be	200
+	Set Suite Variable	${Job_Event_ID}
+
+002  Verify the job launched successfully
+	Sleep	70
+	Last Elog Sholud Contain	Launching job (job_push_config_directly) succeeded
+	GET	/api/v1/jobs/job/event/${Job_Event_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID}	name=job_push_config_directly	device=${Device_List}
+	Check The Job Launch Successfully
+
+003  Check the pushed config on FWB CLI
+	SSH_Write	show server-policy vserver Vserver_176
+	Check_SSH_Output	set vip 2.2.2.2/24
+	SSH_Write	show server-policy server-pool ServerPool_176_1
+	Check_SSH_Output	set ip 12.123.2.2
+
+004  Verify the force=false job launched contain error message
+
+	${JID1}=	Get_Job_ID	job_push_config_directly_error
+	${Job_Event_ID1}	POST Fetch Job ID	/api/v1/jobs/job/${JID1}/launch/	extra_vars
+	Response Code Should Be	200
+	Set Suite Variable	${Job_Event_ID1}
+	Sleep	40
+	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	id=${Job_Event_ID1}	name=job_push_config_directly_error	device=${Device_List}
+	Should Contain	${resp.content}	Configuration Rollback Successfully, Excute Command take error.
+
+005  Check the command has not been deployed to fortiweb device
+
+	SSH_Write	show server-policy vserver Vserver_177
+	Check_SSH_Output	Entry 'Vserver_177' is not found!
+	SSH_Write	show server-policy server-pool ServerPool_177
+	Check_SSH_Output	Entry 'ServerPool_177' is not found!
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create Push_Config_Dir Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_push_config_directly	plugin=push-command-to-fortiweb	description="This is description of this job"
+	...	plugin_option=${Job_Plugin_push_config_directly_Option}	device=${Device_List}
+	Create_On_Setup	/api/v1/jobs/job/	name=job_push_config_directly_error	plugin=push-command-to-fortiweb	description="This is description of this job"
+	...	plugin_option=${Job_Plugin_push_config_directly_Option_noforce}	device=${Device_List}
+
+Cleaning environments
+	SSH_Write
+	...	config server-policy vserver	delete Vserver_176	delete Vserver_176_1	end
+	...	config server-policy server-pool	delete ServerPool_176	delete ServerPool_176_1	end
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_directly
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_directly_error

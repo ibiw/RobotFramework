@@ -1,0 +1,42 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Run Keywords	Fetch_CM_Token	Create_Notification	Create_Another_Notfication
+#Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{Notification_Config_data}	name=notification_a	notification_type=${Notification_Type}
+&{Notification_Config_data1}	name=notification_b	notification_type=${Notification_Type}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+#001  Verify the notification templates can be viewed
+#	GET	/api/v1/system/notification/
+#	Response Code Should Be	200
+#	Set to Dictionary	${Notification_Config}	password	$encrypted$
+#	Response Should Contain result	notification_type=${Notification_Type}
+#	...	notification_configuration=${Notification_Config}	id=${ID}	name=notification_a
+#	Set to Dictionary	${Notification_Config_Mod}	password	$encrypted$
+#	Response Should Contain result	notification_type=${Notification_Type}
+#	...	notification_configuration=${Notification_Config_Mod}	id=${ID1}	name=notification_b
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create_Notification
+	Convert_port_recipient_Integer	${Notification_Config_data}
+	Create_On_Setup	/api/v1/system/notification/	name=notification_a	notification_type=${Notification_Type}	notification_configuration=${Notification_Config}
+
+Create_Another_Notfication
+	Set to Dictionary	${Notification_Config_Mod}	port	${465}
+	${Notification_Rec}	Create List	${Notification_Recipient}
+	Set to Dictionary	${Notification_Config_Mod}	recipients	${Notification_Rec}
+	Set to Dictionary	${Notification_Config_data1}	notification_configuration	${Notification_Config_Mod}
+	POST	/api/v1/system/notification/	${Notification_Config_data1}
+	Response Code Should Be	201
+	${ID1}=	Search_Filter_ID	/api/v1/system/notification/	search=notification_b
+	Set Suite Variable	${ID1}
+	Set to Dictionary	${Notification_Config_Mod}	password	$encrypted$
+
+Cleaning environments
+	DELETE	/api/v1/system/notification/${ID}/
+	Response Code Should Be	204
+	DELETE	/api/v1/system/notification/${ID1}/
+	Response Code Should Be	204

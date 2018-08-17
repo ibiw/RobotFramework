@@ -1,0 +1,163 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_LDAPServer	Add_LDAPUser
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{ldap_name}	name=Auto_LDAPServer
+&{ldap_ip}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	bind_type=Regular
+&{ldap_credential}	username=test1	password=fortinet
+&{ldap_domain}	name=Auto_LDAPServer1	ldap_server_uri=owa2010.fwbqa.com	bind_type=Regular
+&{ldaps_port}	name=Auto_LDAPServer1	port=636	secure_conn=true	bind_type=Regular
+&{ldaps_type_anonymous}	name=Auto_LDAPServer1	bind_type=Anonymous
+&{ldaps_type_simple}	name=Auto_LDAPServer1	bind_type=Simple
+&{ldaps_cn_id}	name=Auto_LDAPServer1	cn_id=uid
+&{ldaps_d_name}	name=Auto_LDAPServer1	d_name=ou=People,dc=devqalab,dc=com,dc=cn
+&{ldaps_user_dn}	name=Auto_LDAPServer1	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn
+&{ldaps_user_password}	name=Auto_LDAPServer1	ldap_password=fortinet
+&{ldaps_config}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=636	secure_conn=True	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+&{request_data_ldap_user}	username=test1	password=fortinet	server=Auto_LDAPServer1	comments=This is a normal ldap user	type=LDAP	wildcard=True
+&{Auto_ldapuser1_credential_incorrect}	username=test1	password=fortinetfdsfsd
+&{Auto_ldapuser1_credential}	username=test1	password=fortinet
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the LDAP Server name can be modified
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldap_name}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer	ldap_server_uri=owa2011.fwbqa.com	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+002  Verify the modified LDAP Server name can be view
+	GET	/api/v1/system/ldap-server/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	name=Auto_LDAPServer	ldap_server_uri=owa2011.fwbqa.com	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+003  Verify the Server IP can be modified
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldap_ip}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+004  Verify the modified Server IP can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+005  Verify the Port&Secure Connection can be modified
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_port}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+006  Verify the modified Port can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+007  Verify the Bind Type-Anonymous can be modified to Simple
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_type_anonymous}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Anonymous
+
+008  Verify the Bind Type-Anonymous can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+007  Verify the Bind Type-Simple can be modified to Anonymous
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_type_simple}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Simple
+
+010  Verify the Bind Type-Simple can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+011  Verify the Common Name Identifier can be modified
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_cn_id}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Simple
+
+012  Verify the modified Common Name Identifier can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+013  Verify the Distinguished Name can be modified
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_d_name}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Simple
+
+014  Verify the modified Distinguished Name can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+015  Verify the User DN can be modified
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_user_dn}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Simple
+
+016  Verify the modified User DN can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+017  Verify the Password of User DN can be modified
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_user_password}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Simple
+
+018  Verify the Password of User DN can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+019  Verify all parameters of the LDAP server can be modified by PUT method
+	${port}=	Convert To Integer	636
+	${secure_conn}=	Convert To Boolean	True
+	PATCH	/api/v1/system/ldap-server/${ID}/	${ldaps_config}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	port=${port}	secure_conn=${secure_conn}	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+020  Verify the Password of User DN can work properly
+	POST	/api/v1/system/ldap-server/${ID}/test/	${ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAPServer
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Add_LDAPServer
+	Create_On_Setup	/api/v1/system/ldap-server/	name=Auto_LDAPServer1	ldap_server_uri=owa2011.fwbqa.com	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=Regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+Add_LDAPUser
+	Create_User_On_Setup	/api/v1/system/user/	username=test2	password=fortinet1	comments=This is a normal LDAP user	type=LDAP	server=Auto_LDAPServer1
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test2	username
+	Delete_On_Teardown	/api/v1/system/ldap-server/	Auto_LDAPServer1	name

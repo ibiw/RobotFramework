@@ -1,0 +1,79 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create Backup Job
+...	Create Restore Job	Create_Config_File	Create Push_Config_File Job	Create Workflow Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Add a workflow job node
+
+	${JID}	Get_Job_ID	job_backup_config
+	Set Suite Variable	${JID}
+	${WJID}	Get_Workflow_Job_ID	workflow_1
+	Set Suite Variable	${WJID}
+	${Workflow_Node}	Create Dictionary	workflow_job_template=${WJID}	unified_job_template=${JID}
+	${node_id_1}	POST Fetch ID	/api/v1/jobs/workflow/node/	${Workflow_Node}
+	Set Suite Variable	${node_id_1}
+	Response Code Should Be	201
+
+002  Verify the success node can be created
+	${JID1}	Get_Job_ID	job_restore_config
+	Set Suite Variable	${JID1}
+	${Workflow_Node}	Create Dictionary	unified_job_template=${JID1}
+	Set Suite Variable	${Workflow_Node}
+	${node_id_2}	POST Fetch ID	/api/v1/jobs/workflow/node/${node_id_1}/success-node/	${Workflow_Node}
+	Set Suite Variable	${node_id_2}
+	Response Code Should Be	201
+	Response Should Contain Sub Dictionary	workflow_job_template=${WJID}	unified_job_template=${JID1}
+
+003  Verify after the success node created the always node cannot be created
+	${JID2}	Get_Job_ID	job_push_config_file
+	Set Suite Variable	${JID2}
+	${Workflow_Node1}	Create Dictionary	unified_job_template=${JID2}
+	Set Suite Variable	${Workflow_Node1}
+	${node_id_3}	POST Fetch ID	/api/v1/jobs/workflow/node/${node_id_1}/always-node/	${Workflow_Node}
+	Set Suite Variable	${node_id_3}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	Error=Cannot associate always_nodes when success_nodes have been associated.
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create Backup Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_backup_config	plugin=backup-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Create Restore Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_restore_config	plugin=restore-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Create_Config_File
+	Create_File_On_Setup	/api/v1/jobs/config-file/	type=file	name=default/job_test.conf	content=${File_Content}
+
+Create Push_Config_File Job
+	${Job_Plugin_push_config_file_Option}	Create Dictionary	load_type=add	config_file=default/job_test.conf	force=${true}
+	Create_On_Setup	/api/v1/jobs/job/	name=job_push_config_file	plugin=push-command-file-to-fortiweb
+	...	description="This is description of this job"	plugin_option=${Job_Plugin_push_config_file_Option}	device=${Device_List}
+
+Create Workflow Job
+	Create_On_Setup	/api/v1/jobs/workflow/	name=workflow_1	description=This is a workflow job
+
+Cleaning environments
+
+	Delete_On_Teardown	/api/v1/jobs/workflow/	workflow_1
+	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config
+	Delete_On_Teardown	/api/v1/jobs/job/	job_restore_config
+	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_file
+	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test.conf

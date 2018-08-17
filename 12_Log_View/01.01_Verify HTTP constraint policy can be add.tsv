@@ -1,0 +1,111 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Creat_FWB_Data
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{http_push_bad_data}	request-type-status=${1}	request-type=${1}	request-file=/test	host-status=enable	source-ip-status=enable	host=15.15.15.15
+	...	source-ip=13.13.13.13-14.14.14.14111
+
+&{http_push_string}	request-type-status=${1}	request-type=${1}	request-file=/test	host-status=enable	source-ip-status=enable	host=15.15.15.15
+	...	source-ip=13.13.13.13-14.14.14.14	max-http-content-length=enable	Illegal-header-value-check=enable	max-http-header-value-length=enable
+	...	max-cookie-in-request=enable
+&{http_push_regular}	request-type-status=${1}	request-type=${2}	request-file=/qwer	host-status=enable	source-ip-status=enable	host=25.25.25.25
+	...	source-ip=23.23.23.23-24.24.24.24	max-url-parameter=enable	Illegal-host-name-check=enable	Illegal-content-length-check=enable
+	...	Illegal-content-type-check=enable
+
+${priv_file}	file/sendfile/add_http_excep_Test.txt
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the illegal data cannot be pushed to device
+
+	${device_policy_name}	Create Dictionary	policy_name=httpconstrains
+	${device_policy_list}	Create List	${device_policy_name}
+	${device_name_policy}	Create Dictionary	dev_name=${Device_Name}	dev_policies=${device_policy_list}
+	${device_name_policy_list}	Create List	${device_name_policy}
+	Set Suite Variable	${device_name_policy_list}
+
+#	${Push_Bad_Data_String}	Create Dictionary	data=${http_push_bad_data}	channel_name=logs-set_httpc_status_changed_e99c2ecc62a9dd2f18f1d8fc7f3c0ad020e2ef8a
+#	...	devices=${device_name_policy_list}
+
+#	POST	/api/v1/logs/add-httpc-exception/	${Push_Bad_Data_String}
+#	Response Code Should Be	400
+#	Should Contain	${resp.content}	Bad data format
+
+002  Verify the "String Match" type URL Pattern and device policy http exception can be pushed
+
+	${Push_Data_String}	Create Dictionary	data=${http_push_string}	channel_name=logs-set_httpc_status_changed_e99c2ecc62a9dd2f18f1d8fc7f3c0ad020e2ef8a
+	...	devices=${device_name_policy_list}
+
+	POST	/api/v1/logs/add-httpc-exception/	${Push_Data_String}
+	Response Code Should Be	201
+
+003  Verify the String http exception pushed successfully
+	SSH_Write	show waf http-constraints-exceptions httpconstraintexceptions
+	Check_SSH_Output	set host 15.15.15.15	set request-file /test	set host-status enable	set source-ip-status enable
+	...	set source-ip 13.13.13.13-14.14.14.14	set max-http-content-length enable	set max-cookie-in-request enable
+	...	set max-http-header-value-length enable	set Illegal-header-value-check enable
+
+004  Verify the "String Match" type URL Pattern and device policy can be pushed
+	${group_policy_name}	Create Dictionary	policy_name=httpconstrains
+	${group_policy_list}	Create List	${group_policy_name}
+	${group_name_policy}	Create Dictionary	group_name=${Group_Name}	group_policies=${group_policy_list}
+	${group_name_policy_list}	Create List	${group_name_policy}
+
+	${Push_Data_Regular}	Create Dictionary	data=${http_push_regular}	channel_name=logs-set_httpc_status_changed_e99c2ecc62a9dd2f18f1d8fc7f3c0ad020e2ef8a
+	...	groups=${group_name_policy_list}
+
+	SSH_Write	config waf http-constraints-exceptions	edit httpconstraintexceptions	config http_constraints-exception-list 	delete 1	delete 2
+
+	POST	/api/v1/logs/add-httpc-exception/	${Push_Data_Regular}
+	Response Code Should Be	201
+
+005  Verify the Regular http exception pushed successfully
+	SSH_Write	show waf http-constraints-exceptions httpconstraintexceptions
+	Check_SSH_Output	set host 25.25.25.25	set request-file /qwer	set host-status enable	set source-ip-status enable
+	...	set source-ip 23.23.23.23-24.24.24.24	set max-url-parameter enable	set Illegal-host-name-check enable
+	...	set Illegal-content-length-check enable	set Illegal-content-type-check enable
+
+006  Verify all parameters can be pushed to FWB
+
+	SSH_Write	config waf http-constraints-exceptions	edit httpconstraintexceptions	config http_constraints-exception-list 	delete 1	delete 2
+	POST JSON	/api/v1/logs/add-httpc-exception/	${priv_file}
+	Response Code Should Be	201
+
+007  Verify the all http exception parameter pushed successfully
+	SSH_Write	show waf http-constraints-exceptions httpconstraintexceptions
+	Check_SSH_Output	set request-file /1asdf	set max-http-header-length enable	set max-http-content-length enable
+	...	set max-http-body-length enable	set max-http-request-filename-length enable	set max-http-request-length enable
+	...	set max-url-parameter-length enable	set max-cookie-in-request enable	set max-header-line-request enable
+	...	set Illegal-http-request-method-check enable	set max-url-parameter enable	set Illegal-host-name-check enable
+	...	set number-of-ranges-in-range-header enable	set block-malformed-request enable
+	...	set Illegal-content-length-check enable	set Illegal-content-type-check enable
+	...	set Illegal-responese-code-check enable	set Post-request-ctype-check enable
+	...	set max-http-header-name-length enable	set max-http-header-value-length enable
+	...	set parameter-name-check enable	set parameter-value-check enable	set Illegal-header-name-check enable
+	...	set Illegal-header-value-check enable	set max-http-body-parameter-length enable	set max-url-param-name-len enable
+	...	set max-url-param-value-len enable	set url-param-name-check enable	set url-param-value-check enable
+	...	set redundant-header-check enable	set duplicate-paramname-check enable
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Creat_FWB_Data
+	SSH_Write	config waf http-constraints-exceptions	edit httpconstraintexceptions	config http_constraints-exception-list 	delete 1	delete 2
+	SSH_Write	config waf http-constraints-exceptions	edit httpconstraintexceptions	end
+	SSH_Write	config waf http-protocol-parameter-restriction	 edit httpconstrains	set exception_name httpconstraintexceptions	next	end
+
+
+Cleaning environments
+	SSH_Write	config waf http-protocol-parameter-restriction	delete httpconstrains	end
+	SSH_Write	config waf http-constraints-exceptions	delete httpconstraintexceptions	end

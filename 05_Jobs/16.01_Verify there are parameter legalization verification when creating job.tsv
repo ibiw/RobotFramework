@@ -1,0 +1,90 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create Backup Job	Create_Config_File
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{request_job_data}	name=job_backup_config	plugin=backup-config-for-fortiweb	description=This_is_description_of_this_job
+&{request_job_data_characters}	name=job_backup_1~!@#$%^&*()_+-={};<?>[]/.,=-`	plugin=backup-config-for-fortiweb	description=This_is_description_of_this_job
+&{request_job_data_miss_device}	name=job_missing_device	plugin=backup-config-for-fortiweb	description=This_is_description_of_this_job
+&{request_job_data_miss_plugin}	name=job_missing_plugin	description=This_is_description_of_this_job
+&{missing_para_plugin_option}	load_type=add	force=${true}
+&{config_file_non_exist_option}	load_type=add	config_file=default/12314asdf.conf	force=${true}
+&{request_job_data_missing_plugin_option}	name=job_missing_plugin_option	plugin=push-command-file-to-fortiweb	description="This is description of this job"	plugin_option=${missing_para_plugin_option}
+&{request_job_data_missing_plugin_option1}	name=job_config_file_non_exist	plugin=push-command-file-to-fortiweb	description="This is description of this job"	plugin_option=${config_file_non_exist_option}
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the job's name is must be unique
+
+	Set to Dictionary	${request_job_data}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Job (job_backup_config) creation failed, job already existing
+	Last Elog Sholud Contain	Job (job_backup_config) creation failed, job already existing
+
+002  Verify the job's name support all special characters input except " / '
+
+	Set to Dictionary	${request_job_data_characters}	device	${Device_List}
+	${JID}	POST Fetch ID	/api/v1/jobs/job/	${request_job_data_characters}
+	Set Suite Variable	${JID}
+	Response Code Should Be	201
+	GET	/api/v1/jobs/job/${JID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	name=job_backup_1~!@#$%^&*()_+-={};<?>[]/.,=-`	plugin=backup-config-for-fortiweb
+	Last Elog Sholud Contain	Job (job_backup_1~!@#$%^&*()_+-={};<?>[]/.,=-`) creation succeeded
+
+003  Verify if missing device/group parameter , the job cannot be created
+
+	${JID}	POST Fetch ID	/api/v1/jobs/job/	${request_job_data_miss_device}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Job (job_missing_device) creation failed, job devices param missing in request
+	Last Elog Sholud Contain	Job (job_missing_device) creation failed, job devices param missing in request
+
+004  Verify if missing plugin parameter , the job cannot be created
+
+	Set to Dictionary	${request_job_data_miss_plugin}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data_miss_plugin}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Job (job_missing_plugin) creation failed, job plugin param missing in request
+	Last Elog Sholud Contain	Job (job_missing_plugin) creation failed, job plugin param missing in request
+
+005  Verify if missing neccessary plugin option parameter, the job cannot be created
+
+	Set to Dictionary	${request_job_data_missing_plugin_option}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data_missing_plugin_option}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Job (job_missing_plugin_option) creation failed, plugin option (config_file) missing
+	Last Elog Sholud Contain	Job (job_missing_plugin_option) creation failed, plugin option (config_file) missing
+
+006  Verify if neccessary config file is not exist, the job cannot be created
+
+	Set to Dictionary	${request_job_data_missing_plugin_option1}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data_missing_plugin_option1}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Job (job_config_file_non_exist) creation failed, config file not existing
+	Last Elog Sholud Contain	Job (job_config_file_non_exist) creation failed, config file not existing
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create Backup Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_backup_config	plugin=backup-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Create_Config_File
+	Create_File_On_Setup	/api/v1/jobs/config-file/	type=file	name=default/job_test.conf	content=${File_Content}
+
+Cleaning environments
+
+	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config
+	${ID}=	Search_Filter_ID	/api/v1/jobs/job/	search=job_backup_1~!@#$%^&*()_+-={};<?>[]/.,=-`
+	Run Keyword If	${ID} != -1	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_1~!@#$%^&*()_+-={};<?>[]/.,=-`
+	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test.conf
+

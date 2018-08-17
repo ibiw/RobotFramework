@@ -1,0 +1,62 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	#Get_Device_Information	Get_Group_ID
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_data}	username=${Admin_Name}	password=${Admin_Password}
+&{request_invalid_credential}	username=admin	password=qewrt
+&{operation_data}	username=fortiweb_qa	password=fortinet	comments=This is a normal local user
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify that admin can't obtain token with incorrect password
+	POST	/api/v1/auth-tokens/	${request_invalid_credential}
+	Response Code Should Be	400
+	Response Should Contain String	Authentication failure. Please try again...
+	Last Elog Sholud Contain	User (admin) login failed from API
+
+002  Verify that admin can create token
+	POST	/api/v1/auth-tokens/	${request_data}
+	Response Code Should Be	200
+	Dictionary Should Contain Key	${resp.json()}	token
+	Dictionary Should Contain Key	${resp.json()}	expires
+	Last Elog Sholud Contain	User (admin) with profile (SystemAdmin) logged in from API
+
+003  Verify that the admin can add user
+	POST	/api/v1/system/user/	${operation_data}
+	Response Code Should Be	201
+	${User_ID}=	Search_Filter_ID	/api/v1/system/user/	search=fortiweb_qa
+	Response Should Contain Sub Dictionary	username=fortiweb_qa	id=${User_ID}	comments=This is a normal local user	url=/api/v1/system/user/${User_ID}/
+	Last Elog Sholud Contain	Adding user (fortiweb_qa) succeeded
+
+004  Verify that the new add user can be delete
+	${id}=	Search_Filter_ID	/api/v1/system/user/	search=fortiweb_qa
+	Pass Execution If	'${id}' == '-1'	No User exist
+	DELETE	/api/v1/system/user/${id}/
+	Response Code Should Be	204
+	GET	/api/v1/system/user/
+	Dictionary Should Not Contain Value	${resp.json()}	fortiweb_qa
+	Last Elog Sholud Contain	User (fortiweb_qa) deletion succeeded
+
+#005  Verify the admin can logout
+	#LOGOUT
+	#Response Code Should Be	200
+	#Response Should Contain String	logout succeeded
+	#Response Should Contain Key	token
+
+#006  Verify that admin with a invalid token can't login
+#	POST	/api/v1/system/user/	${operation_data}
+#	Response Code Should Be	400
+#	Response Should Contain String	Invalid username/password.
+
+#007  Verify that admin with a timeout token can't login
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+LOGOUT
+	DELETE	[Arguments]	${URL}	${headers}=${admin_headers}
+	Create Session	DELETE	https://${CM_IP}
+	${resp}=	DELETE Request	DELETE	${URL}=/api/v1/logout/	headers=${admin_headers}
+	Set Suite Variable	${resp}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	fortiweb_qa	username

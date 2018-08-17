@@ -1,0 +1,69 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${readwrite_profile}	file/sendfile/readwrite_profile.txt
+&{profile_name}	name=readwrite_profile1
+${readonly_profile}	file/sendfile/readonly_profile.txt
+&{new_comments}	comments=This is a new read-only profile
+&{comments_exceed_1024}	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwua
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the name of profile can be modified
+	PATCH	/api/v1/system/profile/${ID}/	${profile_name}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readwrite_profile1	id=${ID}	comments=This is a readwrite profile
+
+002  Verify the modified profile name can be view
+	GET	/api/v1/system/profile/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readwrite_profile1	id=${ID}	comments=This is a readwrite profile
+
+003  Verify the priv of the profile can be modified
+	PATCH JSON	/api/v1/system/profile/${ID}/	${readonly_profile}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=This is a read-only profile
+
+004  Verify the modified priv of the prifile can be view
+	GET	/api/v1/system/profile/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=This is a read-only profile
+
+005  Verify the comments of the profile can be modified
+	PATCH	/api/v1/system/profile/${ID}/	${new_comments}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=This is a new read-only profile
+
+006  Verify the modified comments can be view
+	GET	/api/v1/system/profile/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=This is a new read-only profile
+
+007  Verify the commnets of the profile can exceed 1024 characters
+	PATCH	/api/v1/system/profile/${ID}/	${comments_exceed_1024}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwua
+
+008  Verify the long comments can be view
+	GET	/api/v1/system/profile/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=readonly_profile	id=${ID}	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwua
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${readwrite_profile}	name=readwrite_profile
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/profile/	readonly_profile	name

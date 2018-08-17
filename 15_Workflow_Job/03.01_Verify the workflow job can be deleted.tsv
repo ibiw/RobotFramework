@@ -1,0 +1,36 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Workflow Job
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{unauthorized_head}	Authorization=token bab9113be6d6e4f6fe2352b7df3c26105fce34d	Content-Type=application/json
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the unauthorized user can not deleted workflow job 
+	${Workflow_Job_ID}	Get_Workflow_Job_ID	workflow_job_delete
+	Set Suite Variable	${Workflow_Job_ID}
+	DELETE	/api/v1/jobs/workflow/${Workflow_Job_ID}/	${unauthorized_head}
+	Response Code Should Be	401
+	Response Should Contain Sub Dictionary	detail=Invalid token
+
+002  Verify the workflow job  can be deleted
+	DELETE	/api/v1/jobs/workflow/${Workflow_Job_ID}/
+	Response Code Should Be	204
+	Last Elog Sholud Contain	Deleting workflow job (workflow_job_delete) succeeded
+	GET	/api/v1/jobs/workflow/${Workflow_Job_ID}/
+	Response Code Should Be	404
+	Response Should Contain Sub Dictionary	detail=Not found.
+
+003  Verify the non-exist workflow job cannot be deleted
+	DELETE	/api/v1/jobs/workflow/12345/
+	Response Code Should Be	500
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create Workflow Job
+	Create_On_Setup	/api/v1/jobs/workflow/
+	...	name=workflow_job_delete	description=This workflow job for delete
+
+

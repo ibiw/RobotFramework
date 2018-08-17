@@ -1,0 +1,38 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_Cancel_Event_Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the job can be canceled
+	${Job_Event_ID}	POST Fetch Job ID	/api/v1/jobs/job/${ID}/launch/	extra_vars
+	Response Code Should Be	200
+	Sleep	2
+	Set Suite Variable	${Job_Event_ID}
+	POST	/api/v1/jobs/job/event/${Job_Event_ID}/cancel/	extra_vars
+	Sleep	20
+	Response Code Should Be	202
+	Response Should Contain string	Job event (job_for_event_test,${Job_Event_ID}) cancellation succeeded
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	Job event (job_for_event_test,${Job_Event_ID}) cancellation succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_Cancel_Event_Job
+	Create_On_Setup	/api/v1/jobs/job/
+	...	name=job_for_event_test	plugin=backup-config-for-fortiweb
+	...	description="This is description of this job"	device=${Device_List}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/	job_for_event_test

@@ -1,0 +1,73 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Delete FWB2	Create Group	Create Device	Get_Device_Information	Get Year Month Day time
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify group's devices' Traffic logs can be get
+
+	GET	/api/v1/logs/?dev_name=${Group_Name}&dev_type=2&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=0&size=3
+	Response Code Should Be	200
+	Should Contain	${resp.content}	${Group_Name}
+
+002  Verify all device' Traffic logs can be get
+
+
+	GET	/api/v1/logs/?dev_type=1&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=0&size=100
+	Response Code Should Be	200
+
+003  Verify devices' Traffic logs can be get
+
+	GET	/api/v1/logs/?dev_name=${Device_Name3}&dev_type=3&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=0&size=3
+	Response Code Should Be	200
+	Should Contain	${resp.content}	${Device_Name3}
+
+	GET	/api/v1/logs/?dev_name=${Device_Name3}&dev_type=3&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=0&size=10
+	Response Code Should Be	200
+	${resp1}	Set Variable	${resp.json()}
+	Set Suite Variable	${resp1}
+	${sessionid}	Get From Dictionary	${resp.cookies}	sessionid
+	Set Suite Variable	${sessionid}
+
+004  Verify the Traffic logs can flip over(offset=10)
+
+	${token_headers}	Set Variable	${admin_headers}
+	${session}	Set Variable	sessionid=${sessionid}
+	${session}	Convert To String	${session}
+	${session_header}	Set to Dictionary	${token_headers}	Cookie	${session}
+	GET	/api/v1/logs/?dev_name=${Device_Name3}&dev_type=3&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=10&size=10
+	...	${session_header}
+	Response Code Should Be	200
+	${resp2}	Set Variable	${resp.json()}
+	Set Suite Variable	${resp2}
+
+005  Verify the log numbers of each page can be modified(size=3)
+
+	GET	/api/v1/logs/?dev_type=1&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=tlog.log&offset=0&size=3
+	Response Code Should Be	200
+	Should Contain	${resp.content}	"id":3
+	Should Not Contain	${resp.content}	"id":4
+
+006  Verify after flip over , the first page content is not equal with seond page
+	Should Not Be Equal	${resp1}	${resp2}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Delete FWB2
+	${FWB2ID}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name2}
+	Run Keyword If	${FWB2ID} != -1	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name2}
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name3}	username=${Device_Username3}
+	...	password=${Device_Password3}	ipaddress=${Device_IPaddress3}	group=${ID}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name3}
+	Sleep	5

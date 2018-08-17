@@ -1,0 +1,34 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_Job_For_View
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the specified job can be view by super user
+	GET	/api/v1/jobs/job/${ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=testjob	id=${ID}	url=/api/v1/jobs/job/${ID}/	plugin=install-config-using-restfulapi
+	...	plugin_option=${Job_Plugin_install_config_Option}	device=${Device_List}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_Job_For_View
+	Create_On_Setup	/api/v1/jobs/job/
+	...	name=testjob	plugin=install-config-using-restfulapi
+	...	description="This is description of this job"
+	...	plugin_option=${Job_Plugin_install_config_Option}	device=${Device_List}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/	testjob
+	Response Code Should Be	204

@@ -1,0 +1,43 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create Backup Job
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{Job_notification_config}	name=notification	notification_type=${Notification_Type}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify can create error notification to a job
+	${JID}=	Get_Job_ID	job_backup_config
+	Set Suite Variable	${JID}
+	Convert_port_recipient_Integer	${Job_notification_config}
+	POST	/api/v1/jobs/job/${JID}/notification-templates-error/	${Job_notification_config}
+	Response Code Should Be	201
+	${Notification_ID}=	Search_Filter_ID	/api/v1/jobs/job/${JID}/notification-templates-error/	search=notification
+	Set Suite Variable	${Notification_ID}
+	Set to Dictionary	${Notification_Config}	password	$encrypted$
+	Response Should Contain Sub Dictionary	id=${Notification_ID}	name=notification
+	...	notification_type=${Notification_Type}	notification_configuration=${Notification_Config}
+
+	GET	/api/v1/jobs/job/${JID}/notification-templates-error/
+	Response Code Should Be	200
+	Response Should Contain result	notification_type=${Notification_Type}
+	...	notification_configuration=${Notification_Config}	id=${Notification_ID}	name=notification
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create Backup Job
+	Create_On_Setup	/api/v1/jobs/job/	name=job_backup_config	plugin=backup-config-for-fortiweb
+	...	description=This_is_description_of_this_job	device=${Device_List}
+
+Cleaning environments
+	Pass Execution If	'${Notification_ID}' == '-1'	No Device exist
+	DELETE	/api/v1/system/notification/${Notification_ID}/
+	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config

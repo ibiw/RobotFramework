@@ -1,0 +1,51 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
+Suite Setup	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{interface_wrong_format_ip}	name=port1	ipaddress_mask=1011.2.2.2/16	description=This is a mgmt port
+&{interface_wrong_format_netmask}	name=port1	ipaddress_mask=101.2.2.2/161	description=This is a mgmt port
+&{interface_wrong_port_name}	name=port11111	ipaddress_mask=101.2.2.2/16	description=This is a mgmt port
+&{interface_mod}	name=port1	ipaddress_mask=${CM_IP}/16	description=This is a mgmt port
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the wrong format ip address can not be edited to interface
+
+	PUT	/api/v1/system/network/interface/	${interface_wrong_format_ip}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask format invalid
+	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+
+002  Verify the wrong netmask can not be edited to interface
+
+	PUT	/api/v1/system/network/interface/	${interface_wrong_format_netmask}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask format invalid
+	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+
+003  Verify the non-exist interface can not be edited to interface
+
+	PUT	/api/v1/system/network/interface/	${interface_wrong_port_name}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port11111) failed, Interface name invalid
+	Last Elog Sholud Contain	Editing network interface (port11111) failed, Interface name invalid
+
+004  Verify the correct interface parameter can be edited
+	PUT	/api/v1/system/network/interface/	${interface_mod}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) succeeded
+
+005  Verify the Elog can record correct
+	Last Elog Sholud Contain	Editing network interface (port1) succeeded
+
+006  Verify the interface modified has worked on CM server-side
+	SSH_Write	show interface
+	Check_SSH_Output	This is a mgmt port
+	SSH_Write	fn sh	ifconfig eth0
+	Check_SSH_Output	${CM_IP}
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+

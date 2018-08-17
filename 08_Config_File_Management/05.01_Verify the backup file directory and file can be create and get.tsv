@@ -1,0 +1,46 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Fetch_CM_Token
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{directory_data}	type=directory	name=Directory_1
+&{file_data}	type=file	name=Directory_1/File_1.conf	content=${File_Content}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the directory can be created
+	POST	/api/v1/jobs/backup-file/	${directory_data}
+	Response Code Should Be	200
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	Adding configuration directory (Directory_1) succeeded
+
+003  Verify the file can be created
+	POST	/api/v1/jobs/backup-file/	${file_data}
+	Response Code Should Be	200
+
+004  Verify the Elog can record correct
+	Last Elog Sholud Contain	Adding configuration file (Directory_1/File_1.conf) succeeded
+
+005  Verify the directory and file create succeed
+	GET	/api/v1/jobs/backup-file/?name=Directory_1/File_1.conf
+	Response Code Should Be	200
+	${file_check}	Create Dictionary	path=Directory_1/File_1.conf	content=${File_Content}
+	Dictionary Should Contain Sub Dictionary	${resp.json()}	${file_check}
+
+006  Verify the exist directory cannot be added
+	POST	/api/v1/jobs/backup-file/	${directory_data}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Directory Directory_1 already existing.
+	Last Elog Sholud Contain	Adding configuration (Directory_1) failed, directory (Directory_1) already exists
+
+007  Verify the exist file cannot be added
+	POST	/api/v1/jobs/backup-file/	${file_data}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Duplicate config file File_1.conf
+	Last Elog Sholud Contain	Adding configuration (Directory_1/File_1.conf) failed, duplicate config file found
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Cleaning environments
+	DELETE	/api/v1/jobs/backup-file/?type=directory&name=Directory_1

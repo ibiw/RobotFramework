@@ -1,0 +1,128 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_LDAPServer	Add_Profile	Add_LDAPUser	Add_Group	Add_Device	Get Year Month Day time
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${nonepriv_profile}	file/sendfile/nonepriv_profile.txt
+&{test_credential_incorrect}	username=test1	password=werjql
+&{test_credential}	username=test1	password=fortinet
+&{device_info}	name=${Device_Name}	ipaddress=10.200.8.22	username=admin	password=fortinet	description=This is a autotest device
+&{request_job_data}	name=job_backup_config	plugin=backup-config-for-fortiweb	description=This_is_description_of_this_job	device=
+${license_file}	file/sendfile/FVVM020000139374.lic
+&{user_info}	username=fortinet_qa	password=fortinet	comments=This is a normal local user
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify that the user can't login with invalid password
+	POST	/api/v1/auth-tokens/	${test_credential_incorrect}
+	Response Code Should Be	400
+	Response Should Contain String	Authentication failure. Please try again...
+	Last Elog Sholud Contain	User (test1) login failed from API
+
+002  Verify the user can login with valid password
+	POST	/api/v1/auth-tokens/	${test_credential}
+	Response Code Should Be	200
+	Response Should Contain Key	expires
+	Response Should Contain Key	token
+	Last Elog Sholud Contain	User (test1) with profile (nonepriv_profile) logged in from API
+
+003  Verify the user can't add device(Device module)
+	Fetch_CM_Token	${test_credential}
+	POST	/api/v1/devices/device/	${device_info}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+004  Verify the user can't view device(Device module)
+	Fetch_CM_Token
+	${device_id}=	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
+	Set Suite Variable	${device_id}
+	Fetch_CM_Token	${test_credential}
+	GET	/api/v1/devices/device/${device_id}/
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+005  Verify the user can't delete device(Device module)
+	Fetch_CM_Token	${test_credential}
+	DELETE	/api/v1/devices/device/${device_id}/
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+007  Verify the user can't add job(Jobs)
+	Fetch_CM_Token
+	Get_Device_Information
+	Set to Dictionary	${request_job_data}	device	${Device_List}
+	Fetch_CM_Token	${test_credential}
+	POST	/api/v1/jobs/job/	${request_job_data}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+008  Verify the user can't view jobs(Jobs)
+	Fetch_CM_Token	${test_credential}
+	GET	/api/v1/jobs/job/
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+010  Verify the user can't add license(License)
+	Fetch_CM_Token	${test_credential}
+	POST File	/api/v1/licenses/	${license_file}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+011  Verify the user can't view licenses(License)
+	Fetch_CM_Token	${test_credential}
+	GET	/api/v1/licenses/
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+012  Verify the user can't view attack logs(Log)
+	Fetch_CM_Token	${test_credential}
+	GET	/api/v1/logs/?dev_name=${Device_Name}&dev_type=1&filter=[{"id":"rel_time","value":["${year}-${month_pre}-${day}+06:58:52","${year}-${month}-${day}+06:58:52"],"logic":{"RANGE":1,"is":{"date_time":true},"modifiers":[">="],"search":"string"}}]&log=alog.log&offset=0&size=10
+	Response Code Should Be	403
+
+014  Verify the user can't create user(System Settings)
+	Fetch_CM_Token	${test_credential}
+	POST	/api/v1/system/user/	${user_info}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+015  Verify the user can't view user(System Settings)
+	Fetch_CM_Token
+	${user_id}=	Search_Filter_ID	/api/v1/system/user/	search=test1&username__exact=test1
+	Set Suite Variable	${user_id}
+	Fetch_CM_Token	${test_credential}
+	GET	/api/v1/system/user/${user_id}/
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+016  Login as admin user for cleaning environments
+	Fetch_CM_Token
+
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Add_LDAPServer
+	Create_On_Setup	/api/v1/system/ldap-server/	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn
+
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${nonepriv_profile}	name=nonepriv_profile
+
+Add_LDAPUser
+	Create_User_On_Setup	/api/v1/system/user/	username=test1	password=123456	server=Auto_LDAPServer1	comments=This is a normal ldap user	type=LDAP	profile=${ID}
+
+Add_Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=This is ${Group_Name} for autotest
+
+Add_Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	ipaddress=10.200.8.22	username=admin	password=fortinet	description=This is a autotest device	group=${ID}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test1	username
+	Delete_On_Teardown	/api/v1/system/user/	fortinet_qa	username
+	Delete_On_Teardown	/api/v1/system/profile/	nonepriv_profile	name
+	Delete_On_Teardown	/api/v1/system/ldap-server/	Auto_LDAPServer1	name
+	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config	name
+	Delete_On_Teardown	/api/v1/devices/group/	${Group_Name}	name
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
+

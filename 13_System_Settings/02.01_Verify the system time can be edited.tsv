@@ -1,0 +1,117 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+&{wrong_time}	timezone=56	month=14	day=32	year=2018	hour=12
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the time can be modified
+
+	${time}=	Get Time
+	Set Suite Variable	${time}
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	year=${time[0:4]}	hour=${time[11:13]}	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	200
+	Sleep	2
+	Last Elog Sholud Contain	Updating system time succeeded
+	Fetch_CM_Token
+	GET	/api/v1/system/maintenance/system-time/
+	Response Code Should Be	200
+	
+002  Verify the error time zone cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=561
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	year=${time[0:4]}	hour=${time[11:13]}	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Editing system time failed
+
+003  Verify the error month cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=13	day=${time[8:10]}	year=${time[0:4]}	hour=${time[11:13]}	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+004  Verify the error day cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=32	year=${time[0:4]}	hour=${time[11:13]}	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+
+005  Verify the error hour cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	year=${time[0:4]}	hour=25	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+006  Verify the error minute cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	year=${time[0:4]}	hour=${time[11:13]}	minute=61	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+007  Verify the error second cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	year=${time[0:4]}	hour=${time[11:13]}	minute=${time[14:16]}	second=61
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+008  Verify the incomplete data cannot modify the time
+
+	${Time_Dict}	Create Dictionary	timezone=56
+	...	ntpsettime=0	month=${time[5:7]}	day=${time[8:10]}	minute=${time[14:16]}	second=10
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid time format
+
+009  Verify the ntp server can be set 
+
+	${Time_Dict}	Create Dictionary	timezone=56	ntpsettime=1	ntpinterval=1	ntpserver=10.200.111.16
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	200
+	Sleep	2
+	Last Elog Sholud Contain	Updating system time succeeded
+	GET	/api/v1/system/maintenance/system-time/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	ntpinterval=${1}	ntpserver=10.200.111.16
+
+	${Time_Dict1}	Create Dictionary	timezone=56	ntpsettime=1	ntpinterval=${1440}	ntpserver=10.200.111.16
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict1}
+	Response Code Should Be	200
+	Sleep	2
+	Last Elog Sholud Contain	Updating system time succeeded
+	GET	/api/v1/system/maintenance/system-time/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	ntpinterval=${1440}	ntpserver=10.200.111.16
+
+010  Verify the error ntp parameter cannot modify the time setting
+	${Time_Dict}	Create Dictionary	timezone=56	ntpsettime=12	ntpinterval=1	ntpserver=10.200.111.16
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=The value of ntpsettime is "0" or "1"
+	${Time_Dict}	Create Dictionary	timezone=56	ntpsettime=1	ntpinterval=0	ntpserver=10.200.111.16
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid ntp internal. The range is 1~1440
+	${Time_Dict1}	Create Dictionary	timezone=56	ntpsettime=1441	ntpinterval=0	ntpserver=10.200.111.16
+	PUT	/api/v1/system/maintenance/system-time/	${Time_Dict1}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid ntp internal. The range is 1~1440
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

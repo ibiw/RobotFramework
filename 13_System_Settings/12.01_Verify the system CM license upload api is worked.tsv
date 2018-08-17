@@ -1,0 +1,21 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+${priv_file}	file/sendfile/L2LFI-MM0FJ-3HJUJ-B47QM.txt
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+001  Verify the stale days parameter must be number
+	POST JSON	/api/v1/system/fwm-license/upload/	${priv_file}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=Invalid fwm license!
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	Uploading FWM license failed
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

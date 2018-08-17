@@ -1,0 +1,26 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Upload License
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the used status licenses cannot be deleted
+
+	${License_ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	DELETE	/api/v1/licenses/${License_ID}/
+	Response Code Should Be	400
+	Should Contain	${resp.content}	in used state and not allowed to be deleted
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	License deletion failed. license ${license_file1[14:35]} is in used state and not allowed to be deleted
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Upload License
+
+	${ID}=	Search_Filter_ID	/api/v1/licenses/	search=${license_file_Name1}
+	Run Keyword If	${ID} == -1	POST File	/api/v1/licenses/	${license_file1}

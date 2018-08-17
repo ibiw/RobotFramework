@@ -1,0 +1,39 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Get_Group_ID	Diff_Device
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify can generate different configuration from device
+	SSH_Write	config user local-user	edit testuser	set username testuser	set password fortinet	next	end
+	Sleep	10
+	POST	/api/v1/config/sync-config/	${Device_Dict}
+	Response Code Should Be	200
+	Sleep	70
+	POST	/api/v1/config/group-config/	${Group_Dict}
+	Response Code Should Be	200
+	SSH_Write	config user local-user	delete testuser	end
+	POST	/api/v1/config/diffcli/	${Generate_Diff_Config}
+	Response Code Should Be	200
+	Response Should Contain String	cli
+	Response Should Contain String	edit testuser
+	Response Should Contain String	set username testuser
+
+002  Verify the Elog record correct
+	Last Elog Sholud Contain	Generating differential configuration succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+	
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Diff_Device
+	${Generate_Diff_Config}	Create Dictionary	device_id	${Device_ID}
+	Set Suite Variable	${Generate_Diff_Config}

@@ -1,0 +1,57 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Creat_FWB_Data
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+${priv_file}	file/sendfile/add_signature_exception.txt
+${priv_file1}	file/sendfile/add_signature_exception_regular.txt
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify signature policy exception can be pushed
+
+	POST JSON	/api/v1/logs/add-sig-exception/	${priv_file}
+	Response Code Should Be	201
+
+002  Verify the signature policy exception pushed successfully
+	SSH_Write	config waf signature	edit signaturepolicy	config  filter_list	show
+	Check_SSH_Output	set value /test/test	set value /1.1.1.1/testurl	set value 3.3.3.3	set ip 1.2.3.4-5.6.7.8
+	...	set operator INCLUDE	set http-method get post head options trace connect delete put	set value 12.45.78.12	set value 23.56.89.23
+
+003  Verify signature policy exception can be pushed
+
+	POST JSON	/api/v1/logs/add-sig-exception/	${priv_file1}
+	Response Code Should Be	201
+
+004  Verify the signature policy exception pushed successfully
+	SSH_Write	config waf signature	edit signaturepolicy	config  filter_list	show
+	Check_SSH_Output	set value /regular	set value /1.1.1.1/testurl	set value host_regular	set ip 26.3.3.3
+	...	set operator EXCLUDE	 set http-method get head trace	set value ggggg	set value fffff
+	Sleep	2
+
+005  Verify the Elog can record correct
+	Last Elog Sholud Contain	Adding signature exception succeeded
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Creat_FWB_Data
+	SSH_Write	config waf signature	edit signaturepolicy	next	end
+
+Cleaning environments
+	SSH_Write	config waf signature	delete signaturepolicy	end
+
+
+
+
+

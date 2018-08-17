@@ -1,0 +1,104 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Local_User
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{admin_incorrect_headers}	Authorization=Basic 390bac56054260fcd9f9afa855dd11d891942094	Content-Type=application/json
+&{request_data}	username=fortiweb_qa	password=fortinet	comments=This is a normal local user
+&{fortiweb_qa_credential}	username=fortiweb_qa	password=fortinet
+&{fortiweb_qa_credential_incorrect}	username=fortiweb_qa	password=fortinet312312
+&{fortiweb_with_no_password}	username=fortiweb_qa	password=
+#&{newuser_credential}	username=fortinet_qa	password=fortinet
+&{newuser_with_1024_comments}	username=1024_comments	password=fortinet	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu
+&{newuser_with_1024_comments_credential}	username=1024_comments	password=fortinet
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the new user must have a password
+	POST	/api/v1/system/user/	${fortiweb_with_no_password}
+	Response Code Should Be	400
+	Response Should Contain String	This field may not be blank
+	Last Elog Sholud Contain	Adding user (fortiweb_qa) failed
+
+002  Verify that add new user must have correct credential
+	POST	/api/v1/system/user/	${fortiweb_qa_credential}	${admin_incorrect_headers}
+	Response Code Should Be	401
+	Response Should Contain String	Invalid username/password.
+	Last Elog Sholud Contain	Adding user (fortiweb_qa) failed
+
+003  Verify the added local super user can be view by admin
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	username=fortiweb_qa	id=${User_ID}	url=/api/v1/system/user/${User_ID}/	comments=This is a normal local user
+
+004  Verify the options of added super user can be view by admin
+	OPTIONS	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	name=User Detail	description=Display a user.
+
+005  Verify the head method can be supported for added super user
+	HEAD	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+
+006  Verify the duplicated user can't be added
+	POST	/api/v1/system/user/	${request_data}
+	Response Code Should Be	400
+	Response Should Contain String	A user with that username already exists
+	Last Elog Sholud Contain	Adding user (fortiweb_qa) failed
+
+007  Verify the user can't login with incorrect password
+	POST	/api/v1/auth-tokens/	${fortiweb_qa_credential_incorrect}
+	Response Code Should Be	400
+	Response Should Contain String	Authentication failure. Please try again...
+	Last Elog Sholud Contain	User (fortiweb_qa) login failed from API
+
+008  Verify the new added user can login
+	POST	/api/v1/auth-tokens/	${fortiweb_qa_credential}
+	Response Code Should Be	200
+	Response Should Contain Key	expires
+	Response Should Contain Key	token
+	Last Elog Sholud Contain	User (fortiweb_qa) with profile (SystemAdmin) logged in from API
+
+009  Verify the user can be view by himself
+	Fetch_CM_Token	${fortiweb_qa_credential}
+	GET	/api/v1/system/user/${User_ID}/
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	username=fortiweb_qa	id=${User_ID}	url=/api/v1/system/user/${User_ID}/	comments=This is a normal local user
+
+
+010  Verify the added user can view the user list
+	GET	/api/v1/system/user/
+	Response Code Should Be	200
+
+011  Verify admin can add a user have 1024 characters comments
+	POST	/api/v1/system/user/	${newuser_with_1024_comments}
+	Response Code Should Be	201
+	Response Should Contain Sub Dictionary	username=1024_comments	comments=W4kXMk7MAiwBzTI1ZVoUm08FAwr3BB9voH14CskrsIwKEd0/hJ16llYBBee3PHiibdZQG5iemZ/rbMuLN5VFPLkQ1sjZ+WDZZ7T7oBUlBKXfOiFSNm0z2kgjG+xrsJ2lo628vK1Pnc/R9RghG+mfFeX8us2MBmPEDlM9n2Eto79mmQ4z4N0bW6oSeCq751xi8M78k+c20UzX7imuL8Y2iAAF7ow9qaFYtK4ud/EH+CjtmCijJh9j2jsIsJkFmcct7ic9r4pmahCY1WDv689Py4THoBFGByED5WvqTNNgA/UVXoZ412nxubbLXImpY0fLQZH0Inbx63Do2L/2b2Lg+xwWHTkZqMzJhblmhPf6Jdto6TXo4NvRnrbHkJMyqmR4drkDCpvt8EnF9Kkgue0jeHM7ViK169EY/35FoaaGVHvsJzk4pqVqipkXSpMxyGgTlZDBcRoBip4b1wV+Ecje4qRmyf4r37JkiKKFi9BwT5dET80nb9jj8AoufIBzamTeNTuPsjkWHozP7tpr2wZPcB5LeVbvuPCtLftVhMSmW127SfYdnpYQxuA8v9sj18OmuPZa12bdoyoQnr99HBQGIJmoGVh3ABkR+dCimtNGC5DaYoaNlICAEd8uN2dn6g45oWLZ+4fNwvfi7lpNtKLoGoaiWbapHQ8fja9QOO+3DdMfDzxf5rVZQQTdvAmvH3sFr4NCID0490nceCKAXYze5UFPOVb1Dymvril4vbfbpwyjKzr92h+IRCzb2a5V4sSs2dvnhIparCE2serdImlZIVqiEKoeM5YAH4fuI5KGuxAv9T/j7u7PT0VR1KQvZtryVOJdbKvoPpD2YTlvBfx8uFy1S/G5mF0jAnAQvU6AYl8qCo0hUieZ2o/x5dP3OmwTRlnkihxVF9JdH/0LJ6b6wZBZ9niK9wuqaKKpomOBu8H7PlqBNFvnVxvQaw3JYlg6xmXKpWf2DoTs6GImcA6BphpLLYqc7hVPG5F92o/IXw4TuCLwu
+	Last Elog Sholud Contain	Adding user (1024_comments) succeeded
+
+012  Verify the user can logout
+	DELETE	/api/v1/auth-tokens/	${admin_headers}
+	Response Code Should Be	200
+	Response Should Contain String	logout succeeded
+	Response Should Contain Key	token
+	#Last Elog Sholud Contain	User (fortiweb_qa) with profile (SystemAdmin) logged out from API
+
+013  Verify the local user can be delete
+	Fetch_CM_Token
+	${User_ID}=	Search_Filter_ID	/api/v1/system/user/	search=1024_comments
+	Pass Execution If	'${User_ID}' == '-1'	No User exist
+	DELETE	/api/v1/system/user/${User_ID}
+	Response Code Should Be	204
+	Last Elog Sholud Contain	User (1024_comments) deletion succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Local_User
+	Create_User_On_Setup	/api/v1/system/user/	username=fortiweb_qa	password=fortinet	comments=This is a normal local user
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	fortiweb_qa	username	#The last 'username' is search_key_name 
+	Delete_On_Teardown	/api/v1/system/user/	fortinet_qa	username

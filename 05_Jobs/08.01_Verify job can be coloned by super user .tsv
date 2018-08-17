@@ -1,0 +1,42 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_a_Job_For_Clone
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a job can be coloned by super user
+	Pass Execution If	'${ID}' == '-1'	No Job exist
+	Create Session	POST	https://${CM_IP}
+	${resp}=	POST Request	POST	/api/v1/jobs/job/${ID}/clone/	headers=${admin_headers}
+	Set Suite Variable	${resp}
+	Response Code Should Be	201
+	${ID1}=	Get_Job_ID	testjob @
+	Set Suite Variable	${ID1}
+	Response Should Contain Sub Dictionary	id=${ID1}
+	...	url=/api/v1/jobs/job/${ID1}/	plugin=install-config-using-restfulapi
+	...	description="This is description of this job"	device=[{"name": "${Device_Name}", "device_id": ${Device_ID}}]
+
+002  Verify the Elog record correct
+	Last Elog Sholud Contain	Cloning job (testjob) to
+	Last Elog Sholud Contain	succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_a_Job_For_Clone
+	Create_On_Setup	/api/v1/jobs/job/	name=testjob	plugin=install-config-using-restfulapi
+	...	description="This is description of this job"	plugin_option=${Job_Plugin_install_config_Option}
+	...	device=${Device_List}
+
+Cleaning environments
+	DELETE	/api/v1/jobs/job/${ID1}/
+	DELETE	/api/v1/jobs/job/${ID}/

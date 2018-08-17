@@ -1,0 +1,97 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Groups	Add_Devices	Add_Auth_Server_and_User
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+#&{request_data}	username=${Username_mod}
+#&{request_data}	name=${Device_Name}	username=${Device_Username}	password=${Device_Password}	ipaddress=${Device_IPaddress}	description=${Device_Description}	variables=${Device_Variables}	enabled=${Device_Enabled}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify device list can be view by admin
+	GET	/api/v1/devices/device/
+	Response Code Should Be	200
+	${result}	Create Dictionary	name=${Device_Name}	url=/api/v1/devices/device/${did_1}/	#description=${Group_Desc}	variables=${Group_Var}
+#	Log to console	${result}
+	Results Should Contain Sub Dictionary	${resp.json()}	${result}
+
+002  Verify device list can be view by LDAP user
+	Fetch_CM_Token	{"username":"test1_ldap", "password":"123456"}
+	GET	/api/v1/devices/device/
+	Response Code Should Be	200
+	${result}	Create Dictionary	name=${Device_Name}	url=/api/v1/devices/device/${did_1}/	#description=${Group_Desc}	variables=${Group_Var}
+	Results Should Contain Sub Dictionary	${resp.json()}	${result}
+	Fetch_CM_Token
+
+003  Verify device list can be view by RADIUS user
+	Fetch_CM_Token	{"username":"test1_radius", "password":"123456"}
+	GET	/api/v1/devices/device/
+	Response Code Should Be	200
+	${result}	Create Dictionary	name=${Device_Name}	url=/api/v1/devices/device/${did_1}/	#description=${Group_Desc}	variables=${Group_Var}
+	Results Should Contain Sub Dictionary	${resp.json()}	${result}
+	Fetch_CM_Token
+
+004  Verify the specified device can be view
+	GET	/api/v1/devices/device/${did_1}
+	Response Code Should Be	200
+#	Log to console	${\n}${resp.json()["version"]}
+
+005  Verify the devices of the group can be view
+	GET	/api/v1/devices/group/${gid_1}
+	Response Code Should Be	200
+#	Log to console	${\n}${resp.json()}
+
+006  Verify the device version and domain can be view
+	GET	/api/v1/devices/device/${did_1}/version/
+	Response Code Should Be	200
+#	Log to console	${\n}${resp.json()}
+
+007  Verify the update devices status API can work properly
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Response Should Contain String	Update all devices status successfully
+
+008  Verify the variables of the device can be view
+	GET	/api/v1/devices/device/${did_1}/variable/
+	Response Code Should Be	200
+#	${result}	Set Variable	${Device_Variables_For_View}
+#	Results Should Contain Sub Dictionary	${resp.json()}	${result}
+#	Log to console	${\n}${resp.json()}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Groups
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+#	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":${device_Variables}}
+	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	Set Suite Variable	${gid_1}
+
+
+Add_Devices
+#	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${FWB1_Username}", "password":"${FWB1_Password}", "ipaddress":"${FWB1_IP}", "group":"${gid_1}"}
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
+	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
+	Set Suite Variable	${did_1}
+
+Add_Auth_Server_and_User
+	Create_On_Setup	/api/v1/system/ldap-server/	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn
+	Create_User_On_Setup	/api/v1/system/user/	username=test1_ldap	password=123456	server=Auto_LDAPServer1	comments=This is a normal ldap user	type=LDAP	wildcard=True
+	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.10.15	server_secret_1=fortinet
+	Create_User_On_Setup	/api/v1/system/user/	username=test1_radius	password=123456	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=RADIUS
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
+	Delete_On_Teardown	/api/v1/devices/group/	${Group_Name}	name
+
+	Delete_On_Teardown	/api/v1/system/user/	test1_ldap	username
+	Delete_On_Teardown	/api/v1/system/ldap-server/	Auto_LDAPServer1	name
+
+	Delete_On_Teardown	/api/v1/system/user/	test1_radius	username
+	Delete_On_Teardown	/api/v1/system/radius-server/	Auto_RADIUSServer1	name
+
+#	Delete_On_Teardown	/api/v1/devices/device/	${FWB2}	name
+#	DELETE	/api/v1/devices/device/${did_1}/
+#	DELETE	/api/v1/devices/group/${gid_1}/
+

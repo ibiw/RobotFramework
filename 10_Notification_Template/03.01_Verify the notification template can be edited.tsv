@@ -1,0 +1,30 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Run Keywords	Fetch_CM_Token	Create_Notification
+#Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{Notification_Config_data}	name=notification_a	notification_type=${Notification_Type}
+&{Notification_Config_data_Mod}	name=notification_a	notification_type=${Notification_Type}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+#001  Verify the notification template can be edited
+#	Set to Dictionary	${Notification_Config_Mod}	port	${465}
+#	${Notification_Rec}	Create List	${Notification_Recipient}
+#	Set to Dictionary	${Notification_Config_Mod}	recipients	${Notification_Rec}
+#	Set to Dictionary	${Notification_Config_data_Mod}	notification_configuration	${Notification_Config_Mod}
+#	PUT	/api/v1/system/notification/${ID}/	${Notification_Config_data_Mod}
+#	Response Code Should Be	200
+#	Set to Dictionary	${Notification_Config_Mod}	password	$encrypted$
+#	${result}	Create Dictionary	id=${ID}	name=notification_a	notification_type=${Notification_Type}	notification_configuration=${Notification_Config_Mod}
+#	Dictionary Should Contain Sub Dictionary	${resp.json()}	${result}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Create_Notification
+	Convert_port_recipient_Integer	${Notification_Config_data}
+	Create_On_Setup	/api/v1/system/notification/	name=notification_a	notification_type=${Notification_Type}	notification_configuration=${Notification_Config}
+
+Cleaning environments
+	DELETE	/api/v1/system/notification/${ID}/
+	Response Code Should Be	204

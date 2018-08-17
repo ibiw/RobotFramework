@@ -1,0 +1,22 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+#Suite Setup	Fetch_CM_Token
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+#001  Verify the Monitor config can be modified
+#	Sleep	3
+#	${monitor_data}	Create Dictionary	interval=${16}	retention=${89}
+#	Set Suite Variable	${monitor_data}
+#	PUT	/api/v1/monitor/setting/	${monitor_data}
+#	Response Code Should Be	200
+
+#002  Verify the Monitor modified succeed
+#	GET	/api/v1/monitor/setting/
+#	Response Code Should Be	200
+#	Dictionary Should Contain Sub Dictionary	${resp.json()}	${monitor_data}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+

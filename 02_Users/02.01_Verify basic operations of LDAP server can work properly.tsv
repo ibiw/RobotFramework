@@ -1,0 +1,111 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_LDAPServer	Add_LDAPUser
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{test_ldap}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet	username=test2	password=fortinet
+&{test_ldap_invalid_userdn}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet	username=test3	password=fortinet
+&{test_ldap_invalid_userdn_password}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet1	username=test2	password=fortinet
+&{test_ldap_credential}	username=test2	password=fortinet
+&{test_ldap_invalid_username}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet	username=test3	password=fortinet
+&{test_ldap_invalid_password}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet	username=test2	password=fortinet1
+&{mod_ldap_ip}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.16
+&{test_ldap_unreacheable_ip}	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.16	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet	username=test2	password=fortinet
+&{dns}	serv1=10.0.1.9	serv2=172.22.6.1
+&{test_ldap_domain}	name=Auto_LDAPServer1	ldap_server_uri=owa2010.fwbqa.com	port=389	cn_id=cn	d_name=cn=users,dc=fwbqa,dc=com	bind_type=Regular	ldap_user_dn=cn=test1,cn=users,dc=fwbqa,dc=com	ldap_password=fortinet
+&{test_ldap_domain_data}	name=Auto_LDAPServer1	ldap_server_uri=owa2010.fwbqa.com	port=389	cn_id=cn	d_name=cn=users,dc=fwbqa,dc=com	bind_type=Regular	ldap_user_dn=cn=test1,cn=users,dc=fwbqa,dc=com	ldap_password=fortinet	username=test2	password=fortinet
+&{domain_fake}	name=Auto_LDAPServer1	ldap_server_uri=owa2011.fwbqa.com	bind_type=Regular
+&{test_ldap_unreacheable_domain}	name=Auto_LDAPServer1	ldap_server_uri=owa2011.fwbqa.com	cn_id=cn	d_name=dc=fwbqa,dc=com	bind_type=Regular	ldap_user_dn=cn=test1,dc=fwbqa,dc=com	ldap_password=fortinet	username=test2	password=fortinet
+&{invalid_port1}	name=Auto_LDAPServer1	port=abc
+&{invalid_port2}	name=Auto_LDAPServer1	port=!@#
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+001  Check the LDAP Server connection will be ok, when the LDAP Server can be reached and the credential is correct
+	POST	/api/v1/system/ldap-server/check/	${test_ldap}
+	Response Code Should Be	200
+
+002  If the user_dn is wrong, the check will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_invalid_userdn}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to bind LDAP server.
+
+003  If the password of user_dn is wrong, the check will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_invalid_userdn_password}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to connect LDAP server.
+
+004  Test the account of the LDAP Server will be ok, when the LDAP Server can be reached and the credential is correct
+	POST	/api/v1/system/ldap-server/${ID}/test/	${test_ldap_credential}
+	Response Code Should Be	200
+	Response Should Contain String	LDAP
+
+005  If the user name is wrong, the test will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_invalid_username}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to bind LDAP server.
+
+006  If the user password of user is wrong, the test will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_invalid_password}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to bind LDAP server.
+
+007  Modify a LDAP server with a fake IP
+	PATCH	/api/v1/system/ldap-server/${ID}/	${mod_ldap_ip}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.16	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn
+
+008  If the LDAP server can't be reached, the check will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_unreacheable_ip}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to connect LDAP server.
+
+009  Set a valid DNS 
+	PUT	/api/v1/system/network/dns/	${dns}
+	Response Code Should Be	200
+	Response Should Contain String	Editing DNS succeeded
+
+010  Add a LDAP server with domain name
+	PUT	/api/v1/system/ldap-server/${ID}/	${test_ldap_domain}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=owa2010.fwbqa.com	cn_id=cn	d_name=cn=users,dc=fwbqa,dc=com	bind_type=Regular	ldap_user_dn=cn=test1,cn=users,dc=fwbqa,dc=com	ldap_password=fortinet
+
+011  If the LDAP Server can be reached and the credential is correct, the check of the LDAP Server connection will succeed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_domain_data}
+	Response Code Should Be	200
+
+012  Modify the domain name to a fake name
+	PATCH	/api/v1/system/ldap-server/${ID}/	${domain_fake}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary
+	...	name=Auto_LDAPServer1	ldap_server_uri=owa2011.fwbqa.com	cn_id=cn	d_name=cn=users,dc=fwbqa,dc=com	bind_type=Regular	ldap_user_dn=cn=test1,cn=users,dc=fwbqa,dc=com	ldap_password=fortinet
+
+013  If the LDAP server can't be reached, the check will failed
+	POST	/api/v1/system/ldap-server/check/	${test_ldap_unreacheable_domain}
+	Response Code Should Be	400
+	Response Should Contain String	Failed to connect LDAP server.
+
+014  Verify the port number can't be set to characters
+	PATCH	/api/v1/system/ldap-server/${ID}/	${invalid_port1}
+	Response Code Should Be	400
+
+015  Verify the port number can't be set to symbols
+	PATCH	/api/v1/system/ldap-server/${ID}/	${invalid_port2}
+	Response Code Should Be	400
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Add_LDAPServer
+	Create_On_Setup	/api/v1/system/ldap-server/	name=Auto_LDAPServer1	ldap_server_uri=10.200.10.15	cn_id=uid	d_name=ou=People,dc=devqalab,dc=com,dc=cn	bind_type=regular	ldap_user_dn=uid=test1,ou=People,dc=devqalab,dc=com,dc=cn	ldap_password=fortinet
+
+Add_LDAPUser
+	Create_User_On_Setup	/api/v1/system/user/	username=test2	password=fortinet1	comments=This is a normal LDAP user	type=LDAP	server=Auto_LDAPServer1
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	test2	username
+	Delete_On_Teardown	/api/v1/system/ldap-server/	Auto_LDAPServer1	name

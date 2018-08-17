@@ -1,0 +1,33 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_a_Job_For_Delete
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a job can be deleted by super user
+	Pass Execution If	'${ID}' == '-1'	No Job exist
+	DELETE	/api/v1/jobs/job/${ID}/
+	Response Code Should Be	204
+	GET	/api/v1/jobs/job/${ID}/
+	Response Code Should Be	404
+	Should Contain	${resp.content}	Not found
+
+002  Verify the Elog record correct
+	Last Elog Sholud Contain	Deleting job (job_for_delete) succeeded
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Create_a_Job_For_Delete
+	Create_On_Setup	/api/v1/jobs/job/
+	...	name=job_for_delete	plugin=job_install_config_plugin	description="This is description of this job"
+	...	plugin_option=${Job_Plugin_install_config_Option}	device=${Device_List}
+

@@ -1,0 +1,34 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information
+Suite Teardown	Cleaning environments
+Force Tags	zx
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_job_data}	name=job_restore_config	plugin=restore-config-for-fortiweb	description="This is description of this job"
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify a restore-config job can be added by super user
+	Set to Dictionary	${request_job_data}	device	${Device_List}
+	POST	/api/v1/jobs/job/	${request_job_data}
+	Response Code Should Be	201
+	${Job_ID}=	Get_Job_ID	job_restore_config
+	Set Suite Variable	${Job_ID}
+	Response Should Contain Sub Dictionary
+	...	name=job_restore_config	id=${Job_ID}	url=/api/v1/jobs/job/${Job_ID}/
+	...	plugin=restore-config-for-fortiweb	device=${Device_List}
+
+002  Verify the Elog can record correct
+	Last Elog Sholud Contain	Job (job_restore_config) creation succeeded
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Create Group
+	Create_On_Setup	/api/v1/devices/group/	name=${Group_Name}	description=${Group_Desc}	variables=${Group_Var}
+
+Create Device
+	Create_On_Setup	/api/v1/devices/device/	name=${Device_Name}	username=${Device_Username}
+	...	password=${Device_Password}	ipaddress=${Device_IPaddress}	variables=${Device_Variables}	group=${ID}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/jobs/job/	job_restore_config
+	Response Code Should Be	204
