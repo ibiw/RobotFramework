@@ -43,6 +43,7 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 ## unsupported
 006  Verify root VDOM Virtual still can be pushed
 	Push_Config
+	Sleep 1
 
 007  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
 
