@@ -86,7 +86,7 @@ Disable_ADOM
 	Set Global Variable	${Device_IPaddress}	${IP_Backup}
 
 Push_Config
-	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":0,"waf":1,"log":0}
+	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
 	Response Code Should Be	200
 	Sleep	1
 	POST	/api/v1/config/sync-config/	{"device":${did_1}}
