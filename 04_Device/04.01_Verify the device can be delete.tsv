@@ -53,7 +53,7 @@ Add_Devices
 	Set Suite Variable	${did_2}
 
 Create_Jobs
-	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":"${did_1}", "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"execute pinig 10.200.111.112"}}
+	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"execute pinig 10.200.111.112"}}
 	${jid_1}	Search_Filter_ID	/api/v1/jobs/job/	search=Test_Job-01
 	POST	/api/v1/jobs/job/${jid_1}/launch/
 #	Set Suite Variable	${jid_1}

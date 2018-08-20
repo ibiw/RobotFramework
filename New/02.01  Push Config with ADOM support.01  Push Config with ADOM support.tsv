@@ -38,23 +38,47 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 	SSH_Write	config vdom	edit ADOM_01	end
 	Push_Config
 
-005  Verify the new ADOM server policy can be pushed
+005  Verify the new added Virtual Server in root ADOM still can be pushed
+	SSH_Write	config VDOM	edit root	config server-policy vserver	edit VServer_01	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+	Push_Config
+
+006  Verify the new added customer Service in root ADOM still can be pushed
+	SSH_Write	config VDOM	edit root	config server-policy service custom	edit CServer_01	set protocol TCP	set port 3281	end
+
+007  Verify the new added Virtual Server in the new ADOM can be pushed
+	SSH_Write	config VDOM	edit ADOM_01	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+
+008  Verify the new added Custom Service in the new ADOM can be pushed
+	SSH_Write	config VDOM	edit ADOM_01	config server-policy service custom	edit CServer_11	set protocol TCP	set port 3281	end
+
+009  Verify there is paras conflicted checking when push new ADOM Virtual Server
+	SSH_Write	config VDOM	edit root	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+
+010  Verify there is paras conflicted checking when push new ADOM Custom Service
+	SSH_Write	config VDOM	edit root	config server-policy service custom	edit CServer_11	set protocol TCP	set port 3281	end
+
+011  Verify it supports the job function when pushing the command with vdom's config
+	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"execute pinig 10.200.111.112"}}
+	${jid_1}	Search_Filter_ID	/api/v1/jobs/job/	search=Test_Job-01
+	POST	/api/v1/jobs/job/${jid_1}/launch/
+012  Verify it supports the wizard function when the remote or local is enabled vdom
+
 
 ## unsupported
 006  Verify root VDOM Virtual still can be pushed
 	Push_Config
 
-007  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
+# 015  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
 
-008  Verify tge ADOM Names can only support 11 characters
+# 016  Verify tge ADOM Names can only support 11 characters
 
-009  Verify the root VDOM config can still be pushed
+# 017  Verify the root VDOM config can still be pushed
 
-010  Verify wizard is supported
+# 018  Verify wizard is supported
 
-011  Verify job is supported
+# 019  Verify job is supported
 
-301  Verify the empty data will not cause any isue
+020  Verify the empty data will not cause any isue
 	POST	/api/v1/system/maintenance/clean/	{"entries":[{}, {}, {}]}
 	Response Code Should Be	200
 	Last Elog Sholud Contain	Setting Clean Entries succeeded
