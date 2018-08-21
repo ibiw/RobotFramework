@@ -10,7 +10,7 @@ Force Tags	rw
 ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
 
 ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config global\\n  config system global\\n  set adom-admin disable\\n  end\\n",\"force\":true}
-
+${Job_File}	{\"type\":\"file\",\"name\":\"default\/v\_2.conf\",\"content\":\"    config vdom\\n        edit root\\n            config server-policy service custom\\n                edit T_999\\n                  set port 999\\n                next\\n            end\\n        next\\n    end\\n\"}
 
 ###	root@fortiwebcm:/var/log/fwbcm# pwd
 ###	/var/log/fwbcm
@@ -105,7 +105,11 @@ ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"co
 	POST	/api/v1/jobs/job/${jid_1}/launch/
 
 012  Verify it supports the wizard function when the remote or local is enabled vdom
-
+	# PUT	/api/v1/jobs/config-file/	{"type":"file","name":"default\/v_2.conf","content":"    config vdom\\n        edit root\\n            config server-policy service custom\\n                edit T_999\\n                  set port 999\\n                next\\n            end\\n        next\\n    end\\n"}
+	PUT	/api/v1/jobs/config-file/	${Job_File}
+	Response Code Should Be	200
+	POST	/api/v1/jobs/job/manual-launch/	{"name":"Push Config - default/v_2","description":"","device":[{"device_id":53,"name":"FWB2"}],"plugin":"push-command-file-to-fortiweb","plugin_option":{"config_file":"default/v_1.conf","load_type":"add","force":true},"isPredefined":true,"notify":{},"get_plugin_option":{"force":{"default":false,"require":false,"type":"checkbox"},"load_type":{"default":"add","require":true,"type":"select","choices":["add"]},"config_file":{"data":{"default":["default/Install_Basic_Policy_Config.conf","default/v_1.conf","default/non_ADOM_01.conf","default/enable_ADOM_1.conf","default/a1.conf","default/Install_VDOM_Basic_Policy.conf"]},"require":true,"type":"tree_select"}}}
+	Response Code Should Be	200
 
 ## unsupported
 # 006  Verify root VDOM Virtual still can be pushed
