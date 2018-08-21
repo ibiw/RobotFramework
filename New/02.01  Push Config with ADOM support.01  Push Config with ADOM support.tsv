@@ -39,34 +39,72 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 	Push_Config
 
 005  Verify the new added Virtual Server in root ADOM still can be pushed
-	SSH_Write	config adom	edit root	config server-policy vserver	edit VServer_01	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_01_root": "192.168.201.1/32", "interface_VServer_01_root": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_01_root": "192.168.101.1/32", "interface_VServer_01_root": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit root	config server-policy vserver	edit VServer_01	 set interface port1	set vip 192.168.101.1/32	set status enable	end
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Sleep	1
 	Push_Config
 
 006  Verify the new added customer Service in root ADOM still can be pushed
+	# PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_01_root": "192.168.101.1/32", "interface_VServer_01_root": "port1"}}
+	# Response Code Should Be	200
 	SSH_Write	config vdom	edit root	config server-policy service custom	edit CServer_01	set protocol TCP	set port 3281	end
+	# PUT	/api/v1/devices/device/update/	{}
+	# Response Code Should Be	200
+	Push_Config
 
 007  Verify the new added Virtual Server in the new ADOM can be pushed
-	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_11_ADOM_01": "192.168.202.1/32", "interface_VServer_11_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_11_ADOM_01": "192.168.102.1/32", "interface_VServer_11_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.102.1/32	set status enable	end
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Sleep	1
+	Push_Config
 
 008  Verify the new added Custom Service in the new ADOM can be pushed
 	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_11	set protocol TCP	set port 3281	end
+	Sleep	1
+	Push_Config
 
+# Status: Fail
+# Detail: Virtual Server config is conflicted for wrong parameter
 009  Verify there is paras conflicted checking when push new ADOM Virtual Server
-	SSH_Write	config vdom	edit root	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.123.1/32	set status enable	end
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_12_ADOM_01": "192.168.201.1/32", "interface_VServer_12_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_12_ADOM_01": "192.168.103.1/32", "interface_VServer_12_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_12	 set interface port1	set vip 192.168.103.1/32	set status enable	end
+	Push_Config_Check
+
 
 010  Verify there is paras conflicted checking when push new ADOM Custom Service
-	SSH_Write	config vdom	edit root	config server-policy service custom	edit CServer_11	set protocol TCP	set port 3281	end
+	${IP_Backup}	Set Variable	${Device_IPaddress}
+	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_666	set protocol TCP	set port 3288	end
+	Set Global Variable	${Device_IPaddress}	${Device_IPaddress2}
+	SSH_Write	config global	config system global	set adom-admin disable	end
+	Set Global Variable	${Device_IPaddress}	${IP_Backup}
+	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_13	set protocol TCP	set port 3288	end
+	Sleep	1
+	Push_Config_Check
 
 011  Verify it supports the job function when pushing the command with vdom's config
 	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"execute pinig 10.200.111.112"}}
 	${jid_1}	Search_Filter_ID	/api/v1/jobs/job/	search=Test_Job-01
 	POST	/api/v1/jobs/job/${jid_1}/launch/
+
 012  Verify it supports the wizard function when the remote or local is enabled vdom
 
 
 ## unsupported
-006  Verify root VDOM Virtual still can be pushed
-	Push_Config
+# 006  Verify root VDOM Virtual still can be pushed
+# 	Push_Config
 
 # 015  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
 
@@ -81,7 +119,7 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 020  Verify the empty data will not cause any isue
 	POST	/api/v1/system/maintenance/clean/	{"entries":[{}, {}, {}]}
 	Response Code Should Be	200
-	Last Elog Sholud Contain	Setting Clean Entries succeeded
+	Last Elog Should Contain	Setting Clean Entries succeeded
 	GET	/api/v1/system/maintenance/clean/
 	Response Code Should Be	200
 	${get_data}	Set Variable	${resp.json()}
@@ -101,6 +139,8 @@ Add_Devices
 	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}", "variables":${device_Variables2}}
 	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
 	Set Suite Variable	${did_1}
+	${did_2}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name2}&name__exact=${Device_Name2}
+	Set Suite Variable	${did_2}
 
 Disable_ADOM
 	${IP_Backup}	Set Variable	${Device_IPaddress}
@@ -113,6 +153,9 @@ Push_Config
 	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
 	Response Code Should Be	200
 	Sleep	1
+	GET	/api/v1/devices/group/83/device/
+	Response Code Should be	200
+	Sleep	3
 	POST	/api/v1/config/sync-config/	{"device":${did_1}}
 	Response Code Should Be	200
 	Sleep	70
@@ -122,13 +165,45 @@ Push_Config
 #	POST	/api/v1/config/config-precheck/
 #	Response Code Should Be	200
 #	Sleep	20
+	# Config Check
 	POST	/api/v1/config/config-check/	{"group":${gid_1}}
 	Response Code Should Be	200
 	Sleep	60
+	GET	/api/v1/devices/group/83/device/
+	Response Code Should be	200
+	Sleep	3
 	POST	/api/v1/config/push-config/	{"group":${gid_1}}
 	Response Code Should Be	200
 	Response Should Contain Sub Dictionary	detail=Push successfully.
-	Sleep	30
+	Sleep	20
+
+Push_Config_Check
+	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
+	Response Code Should Be	200
+	Sleep	1
+	GET	/api/v1/devices/group/83/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/sync-config/	{"device":${did_1}}
+	Response Code Should Be	200
+	Sleep	70
+	POST	/api/v1/config/group-config/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	20
+#	POST	/api/v1/config/config-precheck/
+#	Response Code Should Be	200
+#	Sleep	20
+	# Config Check
+	POST	/api/v1/config/config-check/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	60
+	GET	/api/v1/devices/group/83/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/push-config/	{"group":${gid_1}}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=There are no devices need to push. The devices are either no need push or failed to check.
+	Sleep	20
 
 # 主题 从 配置同步 对于 ADOM 的支持 变更为 Config Mgmt/Job-Push Config should support the FWB which the ADOM is enabled.
 # 1. can push the vdom status to the remote, no matter the cm vdom status is same or different from the remote.
