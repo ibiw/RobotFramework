@@ -9,6 +9,9 @@ Force Tags	rw
 @{int_validation}	x	中文
 ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
 
+${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config global\\n  config system global\\n  set adom-admin disable\\n  end\\n",\"force\":true}
+
+
 ###	root@fortiwebcm:/var/log/fwbcm# pwd
 ###	/var/log/fwbcm
 ###	root@fortiwebcm:/var/log/fwbcm# tail -F celery-beat.log
@@ -83,7 +86,8 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_12	 set interface port1	set vip 192.168.103.1/32	set status enable	end
 	Push_Config_Check
 
-
+# Status: Fail
+# Detail: Virtual Server config is conflicted for wrong parameter
 010  Verify there is paras conflicted checking when push new ADOM Custom Service
 	${IP_Backup}	Set Variable	${Device_IPaddress}
 	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_666	set protocol TCP	set port 3288	end
@@ -95,7 +99,8 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 	Push_Config_Check
 
 011  Verify it supports the job function when pushing the command with vdom's config
-	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"execute pinig 10.200.111.112"}}
+	# POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"config global	config system global	set adom-admin disable	end"}}
+	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option":${Job_Plugin_push_config_directly_Option}}
 	${jid_1}	Search_Filter_ID	/api/v1/jobs/job/	search=Test_Job-01
 	POST	/api/v1/jobs/job/${jid_1}/launch/
 
