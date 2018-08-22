@@ -17,32 +17,35 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 ## Failed. When push config, it does not recognized the Administrative Doma has been enabled
 ## No config need to push!
-001  Verify the ADOM enabled setting can be pushed
+001  Verify the Events logs can be set in Days
 
-## Failed with No config need to push!
-002  Verify the new added ADOM can be pushed
+002  Verify the Events logs can be set in Weeks
 
-## Failed with {"detail":"Push successfully."}
-## Configuration push for device (d1) succeeded
-003  Verify the ADOM disabled setting can be pushed
+003  Verify the Events logs can be set in Months
 
-004  Verify the ADOM Enable and new added ADOM can be can be pushed together
+004  Verify the Events logs can be scheduled daily at a time
 
-005  When push ADOM config, 
-## can :)
+005  Verify the Events logs only accept integers less than 999
 
-005  Verify the new ADOM server policy can be pushed
+101  Verify the Job Events can be set in Days
 
-## unsupported
-006  Verify delete the new added ADOM server policy can be pushed
+102  Verify the Job Events can be set in Weeks
 
-007  Verify the ADOM Names can only contain A-Z, a-z, 0-9, _
+103  Verify the Job Events can be set in Months
 
-008  Verify tge ADOM Names can only support 11 characters
+104  Verify the Job Events can be scheduled daily at a time
 
-009  Verify the root VDOM config can still be pushed
+105  Verify the Job Events only accept integers less than 999
 
-010  
+201  Verify the Backup config can be set in Days
+
+202  Verify the Backup config can be set in Weeks
+
+203  Verify the Backup config can be set in Months
+
+204  Verify the Backup config can be scheduled daily at a time
+
+205  Verify the Backup config only accept integers less than 999
 
 301  Verify the empty data will not cause any isue
 	POST	/api/v1/system/maintenance/clean/	{"entries":[{}, {}, {}]}
@@ -58,15 +61,7 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 # 	:FOR 	${int}	IN RANGE	1	9
 # 		POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":"${int}","name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
 
-# 888  Run Jobs
-# 	:FOR 	${int}	IN RANGE	1	9
-# 		POST	/api/v1/jobs/job/1/launch/
 
-999  Push Config
-	Push_Config
-## 1 Modify FWB1
-## 2 Initialize in config management--Pull the config from the selected FWB-FWB1
-## 3 Push config from FWB1 to FWB2
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Add_Groups
