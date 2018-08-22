@@ -7,7 +7,18 @@ Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 @{int_validation}	x	中文
-${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+# ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+
+@{int_val}	1	365	999	1000	-1	x	中文
+@{name}	elog	jobevent	backup
+${is_enable}	True
+@{due_time}	23:00	18:00	00:00
+@{id}	1	2	3
+@{int_unit}	days	weeks	months
+${data}	{"entries":[
+   {"int_val":${int_val[0]},"name":"${name[0]}","enabled":${is_enable},"due_time":"${due_time[0]}","int_unit":"${int_unit[0]}","id":${id[0]}},
+   {"int_val":${int_val[1]},"name":"${name[1]}","enabled":${is_enable},"due_time":"${due_time[1]}","int_unit":"${int_unit[1]}","id":${id[1]}},
+   {"int_val":${int_val[2]},"name":"${name[2]}","enabled":${is_enable},"due_time":"${due_time[2]}","int_unit":"${int_unit[2]}","id":${id[2]}}]}
 
 ###	root@fortiwebcm:/var/log/fwbcm# pwd
 ###	/var/log/fwbcm
@@ -17,11 +28,47 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 ## Failed. When push config, it does not recognized the Administrative Doma has been enabled
 ## No config need to push!
+
+# [
+#     {
+#         "int_val": 365,
+#         "name": "elog",
+#         "enabled": true,
+#         "due_time": "00:00",
+#         "int_unit": "days",
+#         "id": 1
+#     },
+#     {
+#         "int_val": 365,
+#         "name": "jobevent",
+#         "enabled": true,
+#         "due_time": "00:00",
+#         "int_unit": "days",
+#         "id": 2
+#     },
+#     {
+#         "int_val": 365,
+#         "name": "backup",
+#         "enabled": true,
+#         "due_time": "00:00",
+#         "int_unit": "days",
+#         "id": 3
+#     }
+# ]
+
 001  Verify the Events logs can be set in Days
+	# POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00","int_unit":"days","id":1}, {}, {}]}
+	POST	/api/v1/system/maintenance/clean/	${data}
+	Response Code Sholud Be	200
+	Log to Console	${resp.json[0]["int_val"]}
 
 002  Verify the Events logs can be set in Weeks
+	POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00","int_unit":"weeks","id":1}, {}, {}]}
+	Response Code Sholud Be	200
 
 003  Verify the Events logs can be set in Months
+	POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00","int_unit":"months","id":1}, {}, {}]}
+	Response Code Sholud Be	200
 
 004  Verify the Events logs can be scheduled daily at a time
 
@@ -57,6 +104,8 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 	Log to Console	${\n}--${get_data}
 	Should Be True	0	Get length	${get_data}
 
+302  Verify the integers
+
 # 666  Verify the empty data will not cause any isue
 # 	:FOR 	${int}	IN RANGE	1	9
 # 		POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":"${int}","name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
@@ -64,53 +113,7 @@ ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:
 
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
-Add_Groups
-	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
-	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
-	Set Suite Variable	${gid_1}
 
-Add_Devices
-#	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
-#	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${FWB2_Username}", "password":"${FWB2_Password}", "ipaddress":"${FWB2_IP}", "group":"${gid_1}"}
-	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
-	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}", "variables":${device_Variables2}}
-	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
-	Set Suite Variable	${did_1}
-
-Push_Config
-	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":0,"waf":1,"log":0}
-	Response Code Should Be	200
-	Sleep	1
-	POST	/api/v1/config/sync-config/	{"device":${did_1}}
-	Response Code Should Be	200
-	Sleep	70
-	POST	/api/v1/config/group-config/	{"group":${gid_1}}
-	Response Code Should Be	200
-	Sleep	20
-#	POST	/api/v1/config/config-precheck/
-#	Response Code Should Be	200
-#	Sleep	20
-	POST	/api/v1/config/config-check/	{"group":${gid_1}}
-	Response Code Should Be	200
-	Sleep	50
-	POST	/api/v1/config/push-config/	{"group":${gid_1}}
-	Response Code Should Be	200
-	Response Should Contain Sub Dictionary	detail=Push successfully.
-	Sleep	30
-
-# 主题 从 配置同步 对于 ADOM 的支持 变更为 Config Mgmt/Job-Push Config should support the FWB which the ADOM is enabled.
-# 1. can push the vdom status to the remote, no matter the cm vdom status is same or different from the remote.
-# 2. can push the config to the remote no matter the cm vdom config is same or different from the remote, including the vdom status.
-# 3. support checking the vs and service paras are conflicted, when pushing the vdom config.
-# 4. support the wizard function when the remote or local is enabled vdom.
-# 5. support the job function when pushing the command with vdom's config.
-
-# Notice:
-# If you are pushing the config, you must specify the command to tail the remote device whether is it a vdom config, or it will be pushed as non-vdom config.
-
-# 6. support the machine learning when the local or remote device is enabled vdom.
 
 Cleaning environments
-#	POST	/api/v1/system/maintenance/clean/	{"entries":${back_data}}
-#	POST	/api/v1/system/maintenance/clean/	${data}
 	Sleep	1

@@ -6,25 +6,12 @@ Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
-@{int_validation}	x	中文
-${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
-
-# ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config global\\n  config system global\\n  set adom-admin disable\\n  end\\n",\"force\":true}
 ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config global\\n  config system global\\n  set adom-admin enable\\n  end\\n",\"force\":true}
-# ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config vdom\\n  edit root\\n  config server\-policy service custom\\n  delete CServer_01\\n  end\\n  end\\n",\"force\":true}
-${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config server\-policy service custom\\n  delete CServer_01\\n  end\\n  end\\n",\"force\":true}
-# ${Job_File}	{\"type\":\"file\",\"name\":\"v\_2\.conf\",\"content\":\"config vdom\\n  edit root\\n  config server\-policy service custom\\n  edit T\_999\\n  set port 999\\n  next\\n  end\\n"}
-
-###	root@fortiwebcm:/var/log/fwbcm# pwd
-###	/var/log/fwbcm
-###	root@fortiwebcm:/var/log/fwbcm# tail -F celery-beat.log
-###	root@fortiwebcm:/var/log/fwbcm# grep clean_expire_rec_files *
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
-## Failed. When push config, it does not recognized the Administrative Doma has been enabled
-## No config need to push!
+
 001  Verify the ADOM enabled setting can be pushed
-	SSH_Write	config global	config system global	set adom-admin enable	end
+	SSH_Write	config system global	set adom-admin enable	end
 	Push_Config
 
 ## Failed with No config need to push!
@@ -151,18 +138,19 @@ Disable_ADOM
 	Set Global Variable	${Device_IPaddress}	${IP_Backup}
 
 Delete_VServer_Service
-	SSH_Write	config vdom	edit root	config server-policy vserver	delete VServer_01	end
-	SSH_Write	config vdom	edit root	config server-policy service custom	delete CServer_01	end	
+	SSH_Write	config server-policy vserver	delete VServer_01	end	config server-policy service custom	delete CServer_01	end
+	# SSH_Write	config server-policy service custom	delete CServer_01	end	
 	${IP_Backup}	Set Variable	${Device_IPaddress}
 	Set Global Variable	${Device_IPaddress}	${Device_IPaddress2}
-	SSH_Write	config vdom	edit root	config server-policy vserver	delete VServer_01	end
-	SSH_Write	config vdom	edit root	config server-policy service custom	delete CServer_01	end	
+	SSH_Write	config server-policy vserver	delete VServer_01	end	config server-policy service custom	delete CServer_01	end
+	# SSH_Write	config server-policy service custom	delete CServer_01	end	
 	Set Global Variable	${Device_IPaddress}	${IP_Backup}
+
 Push_Config
 	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
 	Response Code Should Be	200
 	Sleep	1
-	GET	/api/v1/devices/group/83/device/
+	GET	/api/v1/devices/group/${gid_1}/device/
 	Response Code Should be	200
 	Sleep	3
 	POST	/api/v1/config/sync-config/	{"device":${did_1}}
@@ -174,7 +162,7 @@ Push_Config
 	POST	/api/v1/config/config-check/	{"group":${gid_1}}
 	Response Code Should Be	200
 	Sleep	60
-	GET	/api/v1/devices/group/83/device/
+	GET	/api/v1/devices/group/${gid_1}/device/
 	Response Code Should be	200
 	Sleep	3
 	POST	/api/v1/config/push-config/	{"group":${gid_1}}
@@ -186,7 +174,7 @@ Push_Config_Check
 	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
 	Response Code Should Be	200
 	Sleep	1
-	GET	/api/v1/devices/group/83/device/
+	GET	/api/v1/devices/group/${gid_1}/device/
 	Response Code Should be	200
 	Sleep	3
 	POST	/api/v1/config/sync-config/	{"device":${did_1}}
@@ -198,7 +186,7 @@ Push_Config_Check
 	POST	/api/v1/config/config-check/	{"group":${gid_1}}
 	Response Code Should Be	200
 	Sleep	60
-	GET	/api/v1/devices/group/83/device/
+	GET	/api/v1/devices/group/${gid_1}/device/
 	Response Code Should be	200
 	Sleep	3
 	POST	/api/v1/config/push-config/	{"group":${gid_1}}
