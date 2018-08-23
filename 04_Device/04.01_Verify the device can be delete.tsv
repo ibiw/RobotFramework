@@ -22,8 +22,10 @@ Force Tags	rw
 ## The device which used by a job can be deleted
 003  Verify a device which used by a job can't be delete
 	DELETE	/api/v1/devices/device/${did_1}/
-	Response Code Should be	403
-	Last Elog Sholud Contain	Deleting device (${Device_Name}) failed
+	Response Code Should be	400
+	# Last Elog Sholud Contain	Deleting device (${Device_Name}) failed
+	Last Elog Sholud Contain	Deleting device (${Device_Name}) failed, the device is being used
+
 
 004  Verify a device wasn't use can be delete
 	DELETE	/api/v1/devices/device/${did_2}/
