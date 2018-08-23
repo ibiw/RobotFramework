@@ -6,18 +6,47 @@ Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${IP_150}	10.200.111.150
+&{Port1}	name=port1	ipaddress_mask=${CM_IP}/16	
+&{Port1_v6}	name=port1	ipv6address_mask=2001::11/64
+&{Port1_des}	name=port1	ipaddress_mask=${CM_IP}/16	ipv6address_mask=	description=This is port1
+
+&{Port2}	name=port2	ipaddress_mask=${IP_150}/16
+# &{Port2_v6}	name=port2	ipaddress_mask=${IP_150}/16	ipv6address_mask=2001::12
+&{Port2_v6}	name=port2	ipv6address_mask=2001::12/64
+&{Port2_des}	name=port2	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port2
+&{Port2_null}	name=port2	ipaddress_mask=	ipv6address_mask=
+
+&{Port3}	name=port3	ipaddress_mask=${IP_150}/16
+&{Port3_v6}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=
+&{Port3_des}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port4
+&{Port3_null}	name=port3	ipaddress_mask=	ipv6address_mask=
+
+&{Port4}	name=port4	ipaddress_mask=${IP_150}/16	ipv6address_mask=
+&{Port4_v6}	name=port4	ipaddress_mask=${IP_150}/16	ipv6address_mask=
+&{Port4_des}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port4
+&{Port4_null}	name=port4	ipaddress_mask=	ipv6address_mask=
+
+${data}	
 
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
 ## Port1 Test
 001  Verify the Port1 can set IPv4 Address in API
+	Set Global Variable	${data}	${Port1}
+	Port_Set_API
 
 002  Verify the Port1 can set IPv6 Address in API
+	Set Global Variable	${data}	${Port1_v6}
+	Port_Set_API
 
 003  Verify the Port1 can set Description in API
+	Set Global Variable	${data}	${Port1_des}
+	Port_Set_API
 
 004  Verify the API setted Port1 IPv4 address is reachable-SSH
+	SSH_Write	show interface
 
 005  Verify the API setted Port1 IPv4 address is reachable-API 
 
@@ -171,7 +200,11 @@ Force Tags	rw
 319  Verify Port4 has IPv6 address validate in CLI 
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
-
+Port_Set_API
+	PUT	/api/v1/system/network/interface/	${data}
+	Response Code Should Be	200
+	Response Should Contain String	Editing network interface (${data["name"]}) succeeded
+	Last Elog Sholud Contain	Editing network interface (${data["name"]}) succeeded
 
 Cleaning environments
 	Sleep	1
