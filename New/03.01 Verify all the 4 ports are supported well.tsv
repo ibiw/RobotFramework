@@ -7,31 +7,35 @@ Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 ${IP_150}	10.200.111.150
-&{Port1}	name=port1	ipaddress_mask=${CM_IP}/16	
-&{Port1_v6}	name=port1	ipv6address_mask=2001::11/64
-&{Port1_des}	name=port1	ipaddress_mask=${CM_IP}/16	ipv6address_mask=	description=This is port1
+@{ports}	port1	port2	port3	port4
+@{V6}	2001::11	2001::12	2001::13	2001::14
 
-&{Port2}	name=port2	ipaddress_mask=${IP_150}/16
-# &{Port2_v6}	name=port2	ipaddress_mask=${IP_150}/16	ipv6address_mask=2001::12
-&{Port2_v6}	name=port2	ipv6address_mask=2001::12/64
-&{Port2_des}	name=port2	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port2
-&{Port2_null}	name=port2	ipaddress_mask=	ipv6address_mask=
+&{Port1}	name=${ports[0]}	ipaddress_mask=${CM_IP}/16	
+&{Port1_v6}	name=${ports[0]}	ipv6address_mask=${v6[0]}/64
+&{Port1_des}	name=${ports[0]}	description=${ports[0]}
 
-&{Port3}	name=port3	ipaddress_mask=${IP_150}/16
-&{Port3_v6}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=
-&{Port3_des}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port4
-&{Port3_null}	name=port3	ipaddress_mask=	ipv6address_mask=
+&{Port2}	name=${ports[1]}	ipaddress_mask=${IP_150}/16
+&{Port2_v6}	name=${ports[1]}	ipv6address_mask=${v6[1]}/64
+&{Port2_des}	description=${ports[1]}
+&{Port2_null}	name=${ports[1]}	ipaddress_mask=	ipv6address_mask=
 
-&{Port4}	name=port4	ipaddress_mask=${IP_150}/16	ipv6address_mask=
-&{Port4_v6}	name=port4	ipaddress_mask=${IP_150}/16	ipv6address_mask=
-&{Port4_des}	name=port3	ipaddress_mask=${IP_150}/16	ipv6address_mask=	description=This is port4
-&{Port4_null}	name=port4	ipaddress_mask=	ipv6address_mask=
+&{Port3}	name=${ports[2]}	ipaddress_mask=${IP_150}/16
+&{Port3_v6}	name=${ports[2]}	ipv6address_mask=${v6[2]}/64
+&{Port3_des}	name=${ports[2]}	description=${ports[2]}
+&{Port3_null}	name=${ports[2]}	ipaddress_mask=	ipv6address_mask=
+
+&{Port4}	name=${ports[3]}	ipaddress_mask=${IP_150}/16	ipv6address_mask=
+&{Port4_v6}	name=${ports[3]}	ipv6address_mask=${v6[3]}/64
+&{Port4_des}	name=${ports[3]}	description=${ports[3]}
+&{Port4_null}	name=${ports[3]}	ipaddress_mask=	ipv6address_mask=
 
 ${data}	
 
+${Device_IPaddress}	Set Variable	${CM_IP}
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
+## set interface <PORT> (ip|ip6) <IPADDRESS/LENGTH>
 ## Port1 Test
 001  Verify the Port1 can set IPv4 Address in API
 	Set Global Variable	${data}	${Port1}
@@ -48,17 +52,26 @@ ${data}
 004  Verify the API setted Port1 IPv4 address is reachable-SSH
 	SSH_Write	show interface
 
-005  Verify the API setted Port1 IPv4 address is reachable-API 
+005  Verify the API setted Port1 IPv4 address is reachable-API
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
 
 006  Verify the API setted Port1 IPv6 address is reachable-SSH
+	Sleep 1
 
 007  Verify the API setted Port1 IPv6 address is reachable-API
+	Sleep 1
 
 008  Verify the Port1 setting can be GET
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[0]["name"]}	${ports[0]}
 
 009  Verify the Port1 can set IPv4 Address in CLI
+	SSH_Write	set interface ${ports[1]} ip ${IP_150}/16
 
 010  Verify the Port1 can set IPv6 Address in CLI
+	SSH_Write	set interface ${ports[2]} ip6 ${V6[0]}/64	end
 
 ## unsupport?
 011  Verify the Port1 can set Description in CLI
