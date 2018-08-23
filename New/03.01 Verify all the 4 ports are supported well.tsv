@@ -1,0 +1,177 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+## Port1 Test
+001  Verify the Port1 can set IPv4 Address in API
+
+002  Verify the Port1 can set IPv6 Address in API
+
+003  Verify the Port1 can set Description in API
+
+004  Verify the API setted Port1 IPv4 address is reachable-SSH
+
+005  Verify the API setted Port1 IPv4 address is reachable-API 
+
+006  Verify the API setted Port1 IPv6 address is reachable-SSH
+
+007  Verify the API setted Port1 IPv6 address is reachable-API
+
+008  Verify the Port1 setting can be GET
+
+009  Verify the Port1 can set IPv4 Address in CLI
+
+010  Verify the Port1 can set IPv6 Address in CLI
+
+## unsupport?
+011  Verify the Port1 can set Description in CLI
+
+012  Verify the CLI setted Port1 IPv4 address is reachable-SSH
+
+013  Verify the CLI setted Port1 IPv4 address is reachable-API
+
+014  Verify the CLI setted Port1 IPv6 address is reachable-SSH
+
+015  Verify the CLI setted Port1 IPv6 address is reachable-API
+
+016  Verify Port1 has IPv4 address validate in API 
+
+017  Verify Port1 has IPv6 address validate in API 
+
+018  Verify Port1 has IPv4 address validate in CLI 
+
+019  Verify Port1 has IPv6 address validate in CLI 
+
+## Port2 Test
+101  Verify the Port2 can set IPv4 Address in API
+
+102  Verify the Port2 can set IPv6 Address in API
+
+103  Verify the Port2 can set Description in API
+
+104  Verify the API setted Port2 IPv4 address is reachable-SSH
+
+105  Verify the API setted Port2 IPv4 address is reachable-API 
+
+106  Verify the API setted Port2 IPv6 address is reachable-SSH
+
+107  Verify the API setted Port2 IPv6 address is reachable-API
+
+108  Verify the Port2 setting can be GET
+
+109  Verify the Port2 can set IPv4 Address in CLI
+
+110  Verify the Port2 can set IPv6 Address in CLI
+
+## unsupport?
+111  Verify the Port2 can set Description in CLI
+
+112  Verify the CLI setted Port2 IPv4 address is reachable-SSH
+
+113  Verify the CLI setted Port2 IPv4 address is reachable-API
+
+114  Verify the CLI setted Port2 IPv6 address is reachable-SSH
+
+115  Verify the CLI setted Port2 IPv6 address is reachable-API
+
+116  Verify Port2 has IPv4 address validate in API 
+
+117  Verify Port2 has IPv6 address validate in API 
+
+118  Verify Port2 has IPv4 address validate in CLI 
+
+119  Verify Port2 has IPv6 address validate in CLI 
+
+## Port3 Test
+201  Verify the Port3 can set IPv4 Address in API
+
+202  Verify the Port3 can set IPv6 Address in API
+
+203  Verify the Port3 can set Description in API
+
+204  Verify the API setted Port3 IPv4 address is reachable-SSH
+
+205  Verify the API setted Port3 IPv4 address is reachable-API 
+
+206  Verify the API setted Port3 IPv6 address is reachable-SSH
+
+207  Verify the API setted Port3 IPv6 address is reachable-API
+
+208  Verify the Port3 setting can be GET
+
+209  Verify the Port3 can set IPv4 Address in CLI
+
+210  Verify the Port3 can set IPv6 Address in CLI
+
+## unsupport?
+211  Verify the Port3 can set Description in CLI
+
+212  Verify the CLI setted Port3 IPv4 address is reachable-SSH
+
+213  Verify the CLI setted Port3 IPv4 address is reachable-API
+
+214  Verify the CLI setted Port3 IPv6 address is reachable-SSH
+
+215  Verify the CLI setted Port3 IPv6 address is reachable-API
+
+216  Verify Port3 has IPv4 address validate in API 
+
+217  Verify Port3 has IPv6 address validate in API 
+
+218  Verify Port3 has IPv4 address validate in CLI 
+
+219  Verify Port3 has IPv6 address validate in CLI 
+
+## Port4 Test
+301  Verify the Port4 can set IPv4 Address in API
+
+302  Verify the Port4 can set IPv6 Address in API
+
+303  Verify the Port4 can set Description in API
+
+304  Verify the API setted Port4 IPv4 address is reachable-SSH
+
+305  Verify the API setted Port4 IPv4 address is reachable-API 
+
+306  Verify the API setted Port4 IPv6 address is reachable-SSH
+
+307  Verify the API setted Port4 IPv6 address is reachable-API
+
+308  Verify the Port4 setting can be GET
+
+309  Verify the Port4 can set IPv4 Address in CLI
+
+310  Verify the Port4 can set IPv6 Address in CLI
+
+## unsupport?
+311  Verify the Port4 can set Description in CLI
+
+312  Verify the CLI setted Port4 IPv4 address is reachable-SSH
+
+313  Verify the CLI setted Port4 IPv4 address is reachable-API
+
+314  Verify the CLI setted Port4 IPv6 address is reachable-SSH
+
+315  Verify the CLI setted Port4 IPv6 address is reachable-API
+
+316  Verify Port4 has IPv4 address validate in API 
+
+317  Verify Port4 has IPv6 address validate in API 
+
+318  Verify Port4 has IPv4 address validate in CLI 
+
+319  Verify Port4 has IPv6 address validate in CLI 
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+Cleaning environments
+	Sleep	1
