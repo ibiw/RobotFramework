@@ -7,29 +7,39 @@ Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 ${IP_150}	10.200.111.150
-@{ports}	port1	port2	port3	port4
-@{V6}	2001::11	2001::12	2001::13	2001::14
+@{ip}	ipaddress_mask	${CM_IP}/16	${IP_150}/16	${IP_150}/16	${IP_150}/16
+@{ip6}	ipv6address_mask	2001::11/64	2001::12/64	2001::13/64	2001::14/64
+@{des}	description	port1	port2	port3	port4
 
-&{Port1}	name=${ports[0]}	ipaddress_mask=${CM_IP}/16	
-&{Port1_v6}	name=${ports[0]}	ipv6address_mask=${v6[0]}/64
-&{Port1_des}	name=${ports[0]}	description=${ports[0]}
+# @{ports}	port1	port2	port3	port4
+# @{V6_add}	2001::11	2001::12	2001::13	2001::14
+# @{id}	1	2	3	4
+# &{items}	name=name	ip=${ip}	ipv6=${ipv6}	des=${des}
+${num}	
+${item}	
 
-&{Port2}	name=${ports[1]}	ipaddress_mask=${IP_150}/16
-&{Port2_v6}	name=${ports[1]}	ipv6address_mask=${v6[1]}/64
-&{Port2_des}	description=${ports[1]}
-&{Port2_null}	name=${ports[1]}	ipaddress_mask=	ipv6address_mask=
 
-&{Port3}	name=${ports[2]}	ipaddress_mask=${IP_150}/16
-&{Port3_v6}	name=${ports[2]}	ipv6address_mask=${v6[2]}/64
-&{Port3_des}	name=${ports[2]}	description=${ports[2]}
-&{Port3_null}	name=${ports[2]}	ipaddress_mask=	ipv6address_mask=
+# &{port1}	name=${ports[0]}	ipaddress_mask=${CM_IP}/16	
+# &{port1_v6}	name=${ports[0]}	ipv6address_mask=${V6_add[0]}/64
+# &{port1_des}	name=${ports[0]}	description=${ports[0]}
 
-&{Port4}	name=${ports[3]}	ipaddress_mask=${IP_150}/16	ipv6address_mask=
-&{Port4_v6}	name=${ports[3]}	ipv6address_mask=${v6[3]}/64
-&{Port4_des}	name=${ports[3]}	description=${ports[3]}
-&{Port4_null}	name=${ports[3]}	ipaddress_mask=	ipv6address_mask=
+# &{port2}	name=${ports[1]}	ipaddress_mask=${IP_150}/16
+# &{port2_v6}	name=${ports[1]}	ipv6address_mask=${V6_add[1]}/64
+# &{port2_des}	description=${ports[1]}
+# &{port2_null}	name=${ports[1]}	ipaddress_mask=	ipv6address_mask=
 
-${data}	
+# &{port3}	name=${ports[2]}	ipaddress_mask=${IP_150}/16
+# &{port3_v6}	name=${ports[2]}	ipv6address_mask=${V6_add[2]}/64
+# &{port3_des}	name=${ports[2]}	description=${ports[2]}
+# &{port3_null}	name=${ports[2]}	ipaddress_mask=	ipv6address_mask=
+
+# &{port4}	name=${ports[3]}	ipaddress_mask=${IP_150}/16	ipv6address_mask=
+# &{port4_v6}	name=${ports[3]}	ipv6address_mask=${V6_add[3]}/64
+# &{port4_des}	name=${ports[3]}	description=${ports[3]}
+# &{port4_null}	name=${ports[3]}	ipaddress_mask=	ipv6address_mask=
+
+
+# ${data}	
 
 ${Device_IPaddress}	Set Variable	${CM_IP}
 
@@ -38,15 +48,14 @@ ${Device_IPaddress}	Set Variable	${CM_IP}
 ## set interface <PORT> (ip|ip6) <IPADDRESS/LENGTH>
 ## Port1 Test
 001  Verify the Port1 can set IPv4 Address in API
-	Set Global Variable	${data}	${Port1}
-	Port_Set_API
+	Port_Set_API	${1}	${ip}
 
 002  Verify the Port1 can set IPv6 Address in API
-	Set Global Variable	${data}	${Port1_v6}
+	Set Global Variable	${data}	${port1_v6}
 	Port_Set_API
 
 003  Verify the Port1 can set Description in API
-	Set Global Variable	${data}	${Port1_des}
+	Set Global Variable	${data}	${port1_des}
 	Port_Set_API
 
 004  Verify the API setted Port1 IPv4 address is reachable-SSH
@@ -71,7 +80,7 @@ ${Device_IPaddress}	Set Variable	${CM_IP}
 	SSH_Write	set interface ${ports[1]} ip ${IP_150}/16
 
 010  Verify the Port1 can set IPv6 Address in CLI
-	SSH_Write	set interface ${ports[2]} ip6 ${V6[0]}/64	end
+	SSH_Write	set interface ${ports[2]} ip6 ${V6_add[0]}/64	end
 
 ## unsupport?
 011  Verify the Port1 can set Description in CLI
@@ -213,11 +222,27 @@ ${Device_IPaddress}	Set Variable	${CM_IP}
 319  Verify Port4 has IPv6 address validate in CLI 
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
-Port_Set_API
-	PUT	/api/v1/system/network/interface/	${data}
+
+
+Port_Set_API	
+	[Arguments]	${num}	${item}	
+
+##  Set
+	PUT	/api/v1/system/network/interface/	{"name":"port${num}", "${item[0]}":"${item[${num}]}"}
 	Response Code Should Be	200
-	Response Should Contain String	Editing network interface (${data["name"]}) succeeded
-	Last Elog Sholud Contain	Editing network interface (${data["name"]}) succeeded
+	Response Should Contain String	Editing network interface (port${num}) succeeded
+	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
+
+##  Check
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
+	Log to Console	${\n} ${resp.json()[${num-1}]["${item[0]}"]}
+
+API_Check	${check_id}	${check_item}
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${check_id}]["${check_name}"]}	${ports[${check_id}]}
 
 Cleaning environments
 	Sleep	1
