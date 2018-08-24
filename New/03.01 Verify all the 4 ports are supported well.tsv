@@ -80,6 +80,7 @@ ${item}
 
 ## Port2 Test
 101  Verify the Port2 can set IPv4 Address in API
+	Clean_Port	${3}	${4}
 	Port_Set_API	${2}	${ip}
 
 102  Verify the Port2 can set IPv6 Address in API
@@ -139,6 +140,7 @@ ${item}
 
 ## Port3 Test
 201  Verify the Port3 can set IPv4 Address in API
+	Clean_Port	${2}	${4}
 	Port_Set_API	${3}	${ip}
 
 202  Verify the Port3 can set IPv6 Address in API
@@ -198,8 +200,7 @@ ${item}
 
 ## Port4 Test
 301  Verify the Port4 can set IPv4 Address in API
-	Clean_Port	${2}
-	Clean_Port	${3}
+	Clean_Port	${2}	${3}
 	Port_Set_API	${4}	${ip}
 
 302  Verify the Port4 can set IPv6 Address in API
@@ -255,6 +256,7 @@ ${item}
 	Sleep	1
 
 319  Verify Port4 has IPv6 address validate in CLI 
+	Clean_Port	${2}	${3}	${4}
 	Sleep	1
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
@@ -302,11 +304,12 @@ Port_Check_SSH
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
 
 Clean_Port
-	[Arguments]	${num}
-	PUT	/api/v1/system/network/interface/	{"name":"port${num}"}"}
-	Response Code Should Be	200
-	Response Should Contain String	Editing network interface (port${num}) succeeded
-	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
+	[Arguments]	@{num}
+	:FOR	${tmp}	in	@{num}
+		PUT	/api/v1/system/network/interface/	{"name":"port${tmp}","ipaddress_mask":"","ipv6address_mask":"","description":""}
+		Response Code Should Be	200
+		Response Should Contain String	Editing network interface (port${tmp}) succeeded
+		Last Elog Sholud Contain	Editing network interface (port${tmp}) succeeded
 
 Cleaning environments
 	Sleep	1
