@@ -1,47 +1,20 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 Resource	../Resource/CM_Resource.tsv
-Resource	../Resource/SSH_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
 Suite Setup	Run Keywords	Fetch_CM_Token
 Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 ${IP_150}	10.200.111.150
-@{ip}	ipaddress_mask	${CM_IP}/16	${IP_150}/16	${IP_150}/16	${IP_150}/16
-@{ip6}	ipv6address_mask	2001::11/64	2001::12/64	2001::13/64	2001::14/64
+@{SSH_IP}	${CM_IP}	${IP_150}	${IP_150}	${IP_150}
+@{ip}	ipaddress_mask	${CM_IP}/16	${IP_150}/16	${IP_150}/16	${IP_150}/16	ip
+@{ip6}	ipv6address_mask	2001::11/64	2001::12/64	2001::13/64	2001::14/64	ip6
 @{des}	description	port1	port2	port3	port4
 
-# @{ports}	port1	port2	port3	port4
-# @{V6_add}	2001::11	2001::12	2001::13	2001::14
-# @{id}	1	2	3	4
-# &{items}	name=name	ip=${ip}	ipv6=${ipv6}	des=${des}
+
 ${num}	
 ${item}	
-
-
-# &{port1}	name=${ports[0]}	ipaddress_mask=${CM_IP}/16	
-# &{port1_v6}	name=${ports[0]}	ipv6address_mask=${V6_add[0]}/64
-# &{port1_des}	name=${ports[0]}	description=${ports[0]}
-
-# &{port2}	name=${ports[1]}	ipaddress_mask=${IP_150}/16
-# &{port2_v6}	name=${ports[1]}	ipv6address_mask=${V6_add[1]}/64
-# &{port2_des}	description=${ports[1]}
-# &{port2_null}	name=${ports[1]}	ipaddress_mask=	ipv6address_mask=
-
-# &{port3}	name=${ports[2]}	ipaddress_mask=${IP_150}/16
-# &{port3_v6}	name=${ports[2]}	ipv6address_mask=${V6_add[2]}/64
-# &{port3_des}	name=${ports[2]}	description=${ports[2]}
-# &{port3_null}	name=${ports[2]}	ipaddress_mask=	ipv6address_mask=
-
-# &{port4}	name=${ports[3]}	ipaddress_mask=${IP_150}/16	ipv6address_mask=
-# &{port4_v6}	name=${ports[3]}	ipv6address_mask=${V6_add[3]}/64
-# &{port4_des}	name=${ports[3]}	description=${ports[3]}
-# &{port4_null}	name=${ports[3]}	ipaddress_mask=	ipv6address_mask=
-
-
-# ${data}	
-
-${Device_IPaddress}	Set Variable	${CM_IP}
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
@@ -51,198 +24,289 @@ ${Device_IPaddress}	Set Variable	${CM_IP}
 	Port_Set_API	${1}	${ip}
 
 002  Verify the Port1 can set IPv6 Address in API
-	Set Global Variable	${data}	${port1_v6}
-	Port_Set_API
+	Port_Set_API	${1}	${ip6}
 
 003  Verify the Port1 can set Description in API
-	Set Global Variable	${data}	${port1_des}
-	Port_Set_API
+	Port_Set_API	${1}	${des}
 
 004  Verify the API setted Port1 IPv4 address is reachable-SSH
-	SSH_Write	show interface
+	Port_Check_SSH	${1}
 
 005  Verify the API setted Port1 IPv4 address is reachable-API
-	GET	/api/v1/system/network/interface/
-	Response Code Should Be	200
+	Port_Get_API	${1}
 
 006  Verify the API setted Port1 IPv6 address is reachable-SSH
-	Sleep 1
+	Sleep	1
 
 007  Verify the API setted Port1 IPv6 address is reachable-API
-	Sleep 1
+	Sleep	1
 
 008  Verify the Port1 setting can be GET
-	GET	/api/v1/system/network/interface/
-	Response Code Should Be	200
-	Should Match	${resp.json()[0]["name"]}	${ports[0]}
+	Port_Get_API	${1}
 
 009  Verify the Port1 can set IPv4 Address in CLI
-	SSH_Write	set interface ${ports[1]} ip ${IP_150}/16
+	Port_Set_SSH	${1}	${ip}
 
 010  Verify the Port1 can set IPv6 Address in CLI
-	SSH_Write	set interface ${ports[2]} ip6 ${V6_add[0]}/64	end
+	Port_Set_SSH	${1}	${ip6}
 
 ## unsupport?
 011  Verify the Port1 can set Description in CLI
+	Sleep	1
 
 012  Verify the CLI setted Port1 IPv4 address is reachable-SSH
+	Port_Check_SSH	${1}
 
 013  Verify the CLI setted Port1 IPv4 address is reachable-API
+	Port_Get_API	${1}
 
 014  Verify the CLI setted Port1 IPv6 address is reachable-SSH
+	Sleep	1
 
 015  Verify the CLI setted Port1 IPv6 address is reachable-API
+	Sleep	1
 
 016  Verify Port1 has IPv4 address validate in API 
+	Sleep	1
 
 017  Verify Port1 has IPv6 address validate in API 
+	Sleep	1
 
 018  Verify Port1 has IPv4 address validate in CLI 
+	Sleep	1
 
 019  Verify Port1 has IPv6 address validate in CLI 
+	Sleep	1
 
 ## Port2 Test
 101  Verify the Port2 can set IPv4 Address in API
+	Port_Set_API	${2}	${ip}
 
 102  Verify the Port2 can set IPv6 Address in API
+	Port_Set_API	${2}	${ip6}
 
 103  Verify the Port2 can set Description in API
+	Port_Set_API	${2}	${des}
 
 104  Verify the API setted Port2 IPv4 address is reachable-SSH
+	Port_Check_SSH	${2}
 
 105  Verify the API setted Port2 IPv4 address is reachable-API 
+	Port_Get_API	${2}
 
 106  Verify the API setted Port2 IPv6 address is reachable-SSH
+	Sleep	1
 
 107  Verify the API setted Port2 IPv6 address is reachable-API
+	Sleep	1
 
 108  Verify the Port2 setting can be GET
+	Port_Get_API	${2}
 
 109  Verify the Port2 can set IPv4 Address in CLI
+	Port_Set_SSH	${2}	${ip}
 
 110  Verify the Port2 can set IPv6 Address in CLI
+	Port_Set_SSH	${2}	${ip6}
 
 ## unsupport?
 111  Verify the Port2 can set Description in CLI
+	Sleep	1
 
 112  Verify the CLI setted Port2 IPv4 address is reachable-SSH
+	Port_Check_SSH	${2}
 
 113  Verify the CLI setted Port2 IPv4 address is reachable-API
+	Port_Get_API	${2}
 
 114  Verify the CLI setted Port2 IPv6 address is reachable-SSH
+	Sleep	1
 
 115  Verify the CLI setted Port2 IPv6 address is reachable-API
+	Sleep	1
 
 116  Verify Port2 has IPv4 address validate in API 
+	Sleep	1
 
 117  Verify Port2 has IPv6 address validate in API 
+	Sleep	1
 
 118  Verify Port2 has IPv4 address validate in CLI 
+	Sleep	1
 
 119  Verify Port2 has IPv6 address validate in CLI 
+	Sleep	1
 
 ## Port3 Test
 201  Verify the Port3 can set IPv4 Address in API
+	Port_Set_API	${3}	${ip}
 
 202  Verify the Port3 can set IPv6 Address in API
+	Port_Set_API	${3}	${ip6}
 
 203  Verify the Port3 can set Description in API
+	Port_Set_API	${3}	${des}
 
 204  Verify the API setted Port3 IPv4 address is reachable-SSH
+	Port_Check_SSH	${3}
 
 205  Verify the API setted Port3 IPv4 address is reachable-API 
+	Port_Get_API	${3}
 
 206  Verify the API setted Port3 IPv6 address is reachable-SSH
+	Sleep	1
 
 207  Verify the API setted Port3 IPv6 address is reachable-API
+	Sleep	1
 
 208  Verify the Port3 setting can be GET
+	Port_Get_API	${3}
 
 209  Verify the Port3 can set IPv4 Address in CLI
+	Port_Set_SSH	${3}	${ip}
 
 210  Verify the Port3 can set IPv6 Address in CLI
+	Port_Set_SSH	${3}	${ip6}
 
 ## unsupport?
 211  Verify the Port3 can set Description in CLI
+	Sleep	1
 
 212  Verify the CLI setted Port3 IPv4 address is reachable-SSH
+	Port_Check_SSH	${3}
 
 213  Verify the CLI setted Port3 IPv4 address is reachable-API
+	Port_Get_API	${3}
 
 214  Verify the CLI setted Port3 IPv6 address is reachable-SSH
+	Sleep	1
 
 215  Verify the CLI setted Port3 IPv6 address is reachable-API
+	Sleep	1
 
 216  Verify Port3 has IPv4 address validate in API 
+	Sleep	1
 
 217  Verify Port3 has IPv6 address validate in API 
+	Sleep	1
 
 218  Verify Port3 has IPv4 address validate in CLI 
+	Sleep	1
 
 219  Verify Port3 has IPv6 address validate in CLI 
+	Sleep	1
 
 ## Port4 Test
 301  Verify the Port4 can set IPv4 Address in API
+	Clean_Port	${2}
+	Clean_Port	${3}
+	Port_Set_API	${4}	${ip}
 
 302  Verify the Port4 can set IPv6 Address in API
+	Port_Set_API	${4}	${ip6}
 
 303  Verify the Port4 can set Description in API
+	Port_Set_API	${4}	${des}
 
 304  Verify the API setted Port4 IPv4 address is reachable-SSH
+	Port_Check_SSH	${4}
 
 305  Verify the API setted Port4 IPv4 address is reachable-API 
+	Port_Get_API	${4}
 
 306  Verify the API setted Port4 IPv6 address is reachable-SSH
+	Sleep	1
 
 307  Verify the API setted Port4 IPv6 address is reachable-API
+	Sleep	1
 
 308  Verify the Port4 setting can be GET
+	Port_Get_API	${4}
 
 309  Verify the Port4 can set IPv4 Address in CLI
+	Port_Set_SSH	${4}	${ip}
 
 310  Verify the Port4 can set IPv6 Address in CLI
+	Port_Set_SSH	${4}	${i6}
 
 ## unsupport?
 311  Verify the Port4 can set Description in CLI
+	Sleep	1
 
 312  Verify the CLI setted Port4 IPv4 address is reachable-SSH
+	Port_Check_SSH	${4}
 
 313  Verify the CLI setted Port4 IPv4 address is reachable-API
+	Port_Get_API	${4}
 
 314  Verify the CLI setted Port4 IPv6 address is reachable-SSH
+	Sleep	1
 
 315  Verify the CLI setted Port4 IPv6 address is reachable-API
+	Sleep	1
 
 316  Verify Port4 has IPv4 address validate in API 
+	Sleep	1
 
 317  Verify Port4 has IPv6 address validate in API 
+	Sleep	1
 
 318  Verify Port4 has IPv4 address validate in CLI 
+	Sleep	1
 
 319  Verify Port4 has IPv6 address validate in CLI 
+	Sleep	1
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
 
 Port_Set_API	
 	[Arguments]	${num}	${item}	
-
 ##  Set
 	PUT	/api/v1/system/network/interface/	{"name":"port${num}", "${item[0]}":"${item[${num}]}"}
 	Response Code Should Be	200
 	Response Should Contain String	Editing network interface (port${num}) succeeded
 	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
+##  Check
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
+	Log to Console	${\n}--${resp.json()[${num-1}]["${item[0]}"]}
 
+Port_Set_SSH	
+	[Arguments]	${num}	${item}	
+##  Set
+	SSH_Write	set interface port${num} ${item[5]} ${item[${num}]}
+	Check_SSH_Output_Not_Contain	fail	error
 ##  Check
 	GET	/api/v1/system/network/interface/
 	Response Code Should Be	200
 	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
 	Log to Console	${\n} ${resp.json()[${num-1}]["${item[0]}"]}
 
-API_Check	${check_id}	${check_item}
+Port_Get_API
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
 	GET	/api/v1/system/network/interface/
 	Response Code Should Be	200
-	Should Match	${resp.json()[${check_id}]["${check_name}"]}	${ports[${check_id}]}
+	Should Match	${resp.json()[${num-1}]["name"]}	port${num}
+	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Port_Check_SSH
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
+	SSH_Write	show interface
+	Check_SSH_Output_Not_Contain	fail	error
+	Check_SSH_Output	${CM_IP}/16
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Clean_Port
+	[Arguments]	${num}
+	PUT	/api/v1/system/network/interface/	{"name":"port${num}"}"}
+	Response Code Should Be	200
+	Response Should Contain String	Editing network interface (port${num}) succeeded
+	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
 
 Cleaning environments
 	Sleep	1
