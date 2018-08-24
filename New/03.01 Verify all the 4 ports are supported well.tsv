@@ -68,10 +68,10 @@ ${item}
 	Sleep	1
 
 016  Verify Port1 has IPv4 address validate in API 
-	Sleep	1
+	IPv4_Validate	${1}
 
 017  Verify Port1 has IPv6 address validate in API 
-	Sleep	1
+	IPv4_Validate	${1}
 
 018  Verify Port1 has IPv4 address validate in CLI 
 	Sleep	1
@@ -188,10 +188,10 @@ ${item}
 	Sleep	1
 
 216  Verify Port3 has IPv4 address validate in API 
-	Sleep	1
+	IPv4_Validate	${3}
 
 217  Verify Port3 has IPv6 address validate in API 
-	Sleep	1
+	IPv4_Validate	${3}
 
 218  Verify Port3 has IPv4 address validate in CLI 
 	Sleep	1
@@ -248,10 +248,10 @@ ${item}
 	Sleep	1
 
 316  Verify Port4 has IPv4 address validate in API 
-	Sleep	1
+	IPv4_Validate	${4}
 
 317  Verify Port4 has IPv6 address validate in API 
-	Sleep	1
+	IPv4_Validate	${4}
 
 318  Verify Port4 has IPv4 address validate in CLI 
 	Sleep	1
@@ -260,6 +260,10 @@ ${item}
 	Clean_Port	${2}	${3}	${4}
 	Sleep	1
 
+401  duplicate IPv4 address check
+402  duplicate IPv6 address check
+403  legitimate IPv6 address support check
+# https://en.wikipedia.org/wiki/IPv6_address
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
 
