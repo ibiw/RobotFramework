@@ -8,8 +8,9 @@ Force Tags	rw
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 ${IP_150}	10.200.111.150
 @{SSH_IP}	${CM_IP}	${IP_150}	${IP_150}	${IP_150}
+@{SSH_IP6}	10:200::acac:101	10:200::acac:102	10:200::acac:103	10:200::acac:104
 @{ip}	ipaddress_mask	${CM_IP}/16	${IP_150}/16	${IP_150}/16	${IP_150}/16	ip
-@{ip6}	ipv6address_mask	2001::11/64	2001::12/64	2001::13/64	2001::14/64	ip6
+@{ip6}	ipv6address_mask	${SSH_IP6[0]}/64	${SSH_IP6[1]}/64	${SSH_IP6[2]}/64	${SSH_IP6[3]}/64	ip6
 @{des}	description	port1	port2	port3	port4
 @{ip_netmask}	1.1.1./32	/	1.1.1.1/-1	1.1.1.1/33	1.1.1.1/a	-1.1.1.1/24	1,1,1,1/24	1.1.1.256/24	1.256.1.1/24	1.1.1.a/24
 @{ip6_netmask}	www	1.1.1.1/32	/	2001:db8:85a3:8d3:1319:8a2e:370:7348:1/128	g::1/128	::/129	::/-1	::/a	-1::1/128
@@ -37,10 +38,10 @@ ${item}
 	Port_Get_API	${1}
 
 006  Verify the API setted Port1 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${1}
 
 007  Verify the API setted Port1 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${1}
 
 008  Verify the Port1 setting can be GET
 	Port_Get_API	${1}
@@ -62,16 +63,16 @@ ${item}
 	Port_Get_API	${1}
 
 014  Verify the CLI setted Port1 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${1}
 
 015  Verify the CLI setted Port1 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${1}
 
 016  Verify Port1 has IPv4 address validate in API 
 	IPv4_Validate	${1}
 
 017  Verify Port1 has IPv6 address validate in API 
-	IPv4_Validate	${1}
+	IPv6_Validate	${1}
 
 018  Verify Port1 has IPv4 address validate in CLI 
 	Sleep	1
@@ -273,6 +274,7 @@ Port_Set_API
 ##  Set
 	PUT	/api/v1/system/network/interface/	{"name":"port${num}", "${item[0]}":"${item[${num}]}"}
 	Response Code Should Be	200
+	Log to Console	${\n}${item[${num}]}
 	Response Should Contain String	Editing network interface (port${num}) succeeded
 	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
 ##  Check
@@ -301,6 +303,15 @@ Port_Get_API
 	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
 
+Port_Get_API6
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	[${SSH_IP6[${num-1}]}]
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["name"]}	port${num}
+	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
+	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
+
 Port_Check_SSH
 	[Arguments]	${num}
 	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
@@ -308,6 +319,14 @@ Port_Check_SSH
 	Check_SSH_Output_Not_Contain	fail	error
 	Check_SSH_Output	${CM_IP}/16
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Port_Check_SSH6
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP6[${num-1}]}
+	SSH_Write	show interface
+	Check_SSH_Output_Not_Contain	fail	error
+	Check_SSH_Output	${CM_IP}/64
+	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
 
 Clean_Port
 	[Arguments]	@{num}
@@ -328,10 +347,10 @@ IPv4_Validate
 IPv6_Validate
 	[Arguments]	${num}
 	:FOR	${item}	in	@{ip6_netmask}
-		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ip6address_mask":"${item}"}
+		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ipv6address_mask":"${item}"}
 		Response Code Should Be	400
-		Response Should Contain String	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
-		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
+		Response Should Contain String	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
 
 Cleaning environments
 	Sleep	1
