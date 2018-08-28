@@ -6,10 +6,10 @@ Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
-${IP_150}	10.200.111.150
-@{SSH_IP}	${CM_IP}	${IP_150}	${IP_150}	${IP_150}
+${IP_118}	10.200.111.118
+@{SSH_IP}	${CM_IP}	${IP_118}	${IP_118}	${IP_118}
 @{SSH_IP6}	10:200::acac:101	10:200::acac:102	10:200::acac:103	10:200::acac:104
-@{ip}	ipaddress_mask	${CM_IP}/16	${IP_150}/16	${IP_150}/16	${IP_150}/16	ip
+@{ip}	ipaddress_mask	${CM_IP}/16	${IP_118}/16	${IP_118}/16	${IP_118}/16	ip
 @{ip6}	ipv6address_mask	${SSH_IP6[0]}/64	${SSH_IP6[1]}/64	${SSH_IP6[2]}/64	${SSH_IP6[3]}/64	ip6
 @{des}	description	port1	port2	port3	port4
 @{ip_netmask}	1.1.1./32	/	1.1.1.1/-1	1.1.1.1/33	1.1.1.1/a	-1.1.1.1/24	1,1,1,1/24	1.1.1.256/24	1.256.1.1/24	1.1.1.a/24
