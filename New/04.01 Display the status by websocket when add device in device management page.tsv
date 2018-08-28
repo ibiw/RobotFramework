@@ -1,0 +1,130 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${IP_118}	10.200.111.118
+@{SSH_IP}	${CM_IP}	${IP_118}	${IP_118}	${IP_118}
+@{SSH_IP6}	10:200::acac:101	10:200::acac:102	10:200::acac:103	10:200::acac:104
+@{ip}	ipaddress_mask	${CM_IP}/16	${IP_118}/16	${IP_118}/16	${IP_118}/16	ip
+@{ip6}	ipv6address_mask	${SSH_IP6[0]}/64	${SSH_IP6[1]}/64	${SSH_IP6[2]}/64	${SSH_IP6[3]}/64	ip6
+@{des}	description	port1	port2	port3	port4
+@{ip_netmask}	1.1.1./32	/	1.1.1.1/-1	1.1.1.1/33	1.1.1.1/a	-1.1.1.1/24	1,1,1,1/24	1.1.1.256/24	1.256.1.1/24	1.1.1.a/24
+@{ip6_netmask}	www	1.1.1.1/32	/	2001:db8:85a3:8d3:1319:8a2e:370:7348:1/128	g::1/128	::/129	::/-1	::/a	-1::1/128
+
+${num}	
+${item}	
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+## set interface <PORT> (ip|ip6) <IPADDRESS/LENGTH>
+## Port1 Test
+000  add duplicated IP 
+# {"detail":"Device already exist, IP address should not duplicate."}
+001  Cannot reach the IP
+002  Cannot reach the port
+# {"detail":"Failed to reach 10.200.111.117:90 ,[Errno 111] Connection refused"}
+003  Wrong username or password
+# {"detail":"Can not login Fortiweb!"}
+004  Correct password can add successfully- default
+004  Correct password can add successfully- fds-only
+004  Correct password can add successfully- no optoion
+004  Correct password can add successfully- with Variables
+004  can get device status in monitor
+	Port_Set_API	${1}	${ip}
+
+
+# https://en.wikipedia.org/wiki/IPv6_address
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+Port_Set_API	
+	[Arguments]	${num}	${item}	
+##  Set
+	PUT	/api/v1/system/network/interface/	{"name":"port${num}", "${item[0]}":"${item[${num}]}"}
+	Response Code Should Be	200
+	Log to Console	${\n}${item[${num}]}
+	Response Should Contain String	Editing network interface (port${num}) succeeded
+	Last Elog Sholud Contain	Editing network interface (port${num}) succeeded
+##  Check
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
+	Log to Console	${\n}--${resp.json()[${num-1}]["${item[0]}"]}
+
+Port_Set_SSH	
+	[Arguments]	${num}	${item}	
+##  Set
+	SSH_Write	set interface port${num} ${item[5]} ${item[${num}]}
+	Check_SSH_Output_Not_Contain	fail	error
+##  Check
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
+	Log to Console	${\n} ${resp.json()[${num-1}]["${item[0]}"]}
+
+Port_Get_API
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["name"]}	port${num}
+	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Port_Get_API6
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	[${SSH_IP6[${num-1}]}]
+	GET	/api/v1/system/network/interface/
+	Response Code Should Be	200
+	Should Match	${resp.json()[${num-1}]["name"]}	port${num}
+	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
+	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
+
+Port_Check_SSH
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
+	SSH_Write	show interface
+	Check_SSH_Output_Not_Contain	fail	error
+	Check_SSH_Output	${CM_IP}/16
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Port_Check_SSH6
+	[Arguments]	${num}
+	Set Global Variable	${CM_IP}	${SSH_IP6[${num-1}]}
+	SSH_Write	show interface
+	Check_SSH_Output_Not_Contain	fail	error
+	Check_SSH_Output	${CM_IP}/64
+	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
+
+Clean_Port
+	[Arguments]	@{num}
+	:FOR	${tmp}	in	@{num}
+		PUT	/api/v1/system/network/interface/	{"name":"port${tmp}","ipaddress_mask":"","ipv6address_mask":"","description":""}
+		Response Code Should Be	200
+		Response Should Contain String	Editing network interface (port${tmp}) succeeded
+		Last Elog Sholud Contain	Editing network interface (port${tmp}) succeeded
+
+IPv4_Validate
+	[Arguments]	${num}
+	:FOR	${item}	in	@{ip_netmask}
+		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ipaddress_mask":"${item}"}
+		Response Code Should Be	400
+		Response Should Contain String	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
+		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
+
+IPv6_Validate
+	[Arguments]	${num}
+	:FOR	${item}	in	@{ip6_netmask}
+		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ipv6address_mask":"${item}"}
+		Response Code Should Be	400
+		Response Should Contain String	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+
+Cleaning environments
+	Sleep	1
+	Sleep	1
