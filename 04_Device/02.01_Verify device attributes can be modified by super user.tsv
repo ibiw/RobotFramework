@@ -17,13 +17,13 @@ Force Tags	rw
 #	Set Suite Variable	${did_1}
 
 002  Verify a device can be modified using PUT method
-	PUT	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name}_Modified", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	PUT	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name}_Modified", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":${gid_1}}
 	Response Code Should Be	200
 	Last Elog Sholud Contain	Editing device (${Device_Name}_Modified) succeeded
 
 ## device name cannot same as group name
 003  Verify device name can be modified
-	PATCH	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	PATCH	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":${gid_1}}
 	Response Code Should Be	200
 	Last Elog Sholud Contain	Editing device (${Device_Name}) succeeded
 	${result}	Create Dictionary	name=${Device_Name}	id=${did_1}	group=${gid_1}	url=/api/v1/devices/device/${did_1}/
@@ -31,14 +31,14 @@ Force Tags	rw
 
 ## The Event log should log the current editing device name not the duplicated one
 004  Verify device name can't be modified to a exist one
-	PATCH	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name2}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
+	PATCH	/api/v1/devices/device/${did_1}/	{"name":"${Device_Name2}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":${gid_1}}
 	Response Code Should Be	400
 	Response Should Contain String	The device with this name already exists
 	Last Elog Sholud Contain	Editing device (${Device_Name2}) failed, the name already exists
 
 005  Verify device group can be modified
 #	${gid_2}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name2}&name__exact=${Group_Name2}
-	PATCH	/api/v1/devices/device/${did_1}/	{"group":"${gid_2}"}
+	PATCH	/api/v1/devices/device/${did_1}/	{"group":${gid_2}}
 	Response Code Should Be	200
 	Last Elog Sholud Contain	Editing device (${Device_Name}) succeeded
 #	Set Suite Variable	${gid_2}
@@ -81,10 +81,10 @@ Add_Groups
 	Set Suite Variable	${gid_2}
 
 Add_Devices
-#	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}"}
-#	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${FWB2_Username}", "password":"${FWB2_Password}", "ipaddress":"${FWB2_IP}", "group":"${gid_1}"}
-	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
-	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}", "variables":${device_Variables2}}
+#	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":${gid_1}}
+#	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${FWB2_Username}", "password":"${FWB2_Password}", "ipaddress":"${FWB2_IP}", "group":${gid_1}}
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":${gid_1}, "variables":${device_Variables}}
+	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":${gid_1}, "variables":${device_Variables2}}
 	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
 	Set Suite Variable	${did_1}
 

@@ -47,15 +47,19 @@ ${x_1024}	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 	${interface_data}	Set Variable	${interface_data_empty_ip}
 	PUT	/api/v1/system/network/interface/	${interface_data}
 	Response Code Should Be	400
-	Response Should Contain String	Editing netwrok interface failed, IP/Mask missing
-	Last Elog Sholud Contain	Editing netwrok interface failed, IP/Mask missing
+	Response Should Contain String	Editing network interface (port1) failed, IP address and gateway not in the same subnet
+	Last Elog Sholud Contain	Editing network interface (port1) failed, IP address and gateway not in the same subnet
+	# Last Elog Sholud Contain	Editing netwrok interface failed, IP/Mask missing
+	# Editing network interface (port1) failed, IP address and gateway not in the same subnet
 
 004  Verify there is interface IPv4/Netmask input validiation
 	:FOR	${item}	in	@{ip_netmask}
 		PUT	/api/v1/system/network/interface/	{"name":"port1", "ipaddress_mask":"${item}"}
 		Response Code Should Be	400
-		Response Should Contain String	Editing network interface (port1) failed, IP/Mask format invalid
-		Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+		Response Should Contain String	Editing network interface (port1) failed, IP/Mask ${item} format invalid
+		Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask ${item} format invalid
+		# Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+		# Editing network interface (port1) failed, IP/Mask 1.1.1./32 is invalid.
 
 ## no limit currently, use 1024
 005  Verify the interface Description can be added x characters

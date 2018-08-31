@@ -5,7 +5,7 @@ Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
-&{request_data}	name=${Group_Name}	description=This is ${Group_Name}	variables={VIP_1: 1.1.1.1, DMZ: Port1}
+&{request_data}	name=${Group_Name}	description=This is ${Group_Name}	variables={"VIP_1": "1.1.1.1", "DMZ": "Port1"}
 @{special_characters}	`	~	@	\#	$	%	^	&	*	(	)	+	=	;	'	:	,	.	/	<	>	?
 ## character " will cause 500 error
 

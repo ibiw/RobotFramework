@@ -14,13 +14,14 @@ Force Tags	rw
 	Last Elog Sholud Contain	Editing device group (${Group_Name}-Modified) succeeded
 	Set Suite Variable	${id_1}
 
-002  Verify the group name can't be modified to a exist one
+002  Verify the group name can't be modified to an exist one
 	${id_2}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name2}&name__exact=${Group_Name2}
+	Set Suite Variable	${id_2}
 	PUT	/api/v1/devices/group/${id_2}/	{"name":"${Group_Name}-Modified", "description":"This is Test_Group", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
 	Response Code Should Be	400
 	Response Should Contain String	duplicate key value violates unique constraint
 	Last Elog Sholud Contain	Key (name)=(${Group_Name}-Modified) already exists.
-	Set Suite Variable	${id_2}
+
 
 003  Verify the group name doesn't exist can't be modified
 	PUT	/api/v1/devices/group/112233/	{"name":"${Group_Name}-112233", "description":"This is Test_Group", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
