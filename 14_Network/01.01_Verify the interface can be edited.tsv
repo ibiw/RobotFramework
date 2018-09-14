@@ -17,15 +17,15 @@ Force Tags	zx
 
 	PUT	/api/v1/system/network/interface/	${interface_wrong_format_ip}
 	Response Code Should Be	400
-	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask format invalid
-	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask 1011.2.2.2/16 format invalid
+	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask 1011.2.2.2/16 format invalid
 
 002  Verify the wrong netmask can not be edited to interface
 
 	PUT	/api/v1/system/network/interface/	${interface_wrong_format_netmask}
 	Response Code Should Be	400
-	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask format invalid
-	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
+	Response Should Contain Sub Dictionary	detail=Editing network interface (port1) failed, IP/Mask 101.2.2.2/161 format invalid
+	Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask 101.2.2.2/161 format invalid
 
 003  Verify the non-exist interface can not be edited to interface
 

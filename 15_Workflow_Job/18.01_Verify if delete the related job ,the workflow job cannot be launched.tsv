@@ -30,11 +30,11 @@ Force Tags	zx
 	DELETE	/api/v1/jobs/job/${JID1}/
 	Response Code Should Be	204
 
-003  Verify if delete a related job , the workflow job cannot be launched
+#003  Verify if delete a related job , the workflow job cannot be launched
 
-	POST	/api/v1/jobs/workflow/${ID}/launch/
-	Response Code Should Be	400
-	Response Should Contain Sub Dictionary	msg=Launching workflow job (workflow_1) failed, some dependant jobs missing
+#	POST	/api/v1/jobs/workflow/${ID}/launch/
+#	Response Code Should Be	400
+#	Response Should Contain Sub Dictionary	msg=Launching workflow job (workflow_1) failed, some dependant jobs missing
 
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*

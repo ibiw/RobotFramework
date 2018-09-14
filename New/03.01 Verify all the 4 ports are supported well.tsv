@@ -13,7 +13,7 @@ ${IP_118}	10.200.111.118
 @{ip6}	ipv6address_mask	${SSH_IP6[0]}/64	${SSH_IP6[1]}/64	${SSH_IP6[2]}/64	${SSH_IP6[3]}/64	ip6
 @{des}	description	port1	port2	port3	port4
 @{ip_netmask}	1.1.1./32	/	1.1.1.1/-1	1.1.1.1/33	1.1.1.1/a	-1.1.1.1/24	1,1,1,1/24	1.1.1.256/24	1.256.1.1/24	1.1.1.a/24
-@{ip6_netmask}	www	1.1.1.1/32	/	2001:db8:85a3:8d3:1319:8a2e:370:7348:1/128	g::1/128	::/129	::/-1	::/a	-1::1/128
+@{ip6_netmask}	1.1.1.1/32	www	/	2001:db8:85a3:8d3:1319:8a2e:370:7348:1/128	g::1/128	::/129	::/-1	::/a	-1::1/128
 
 ${num}	
 ${item}	
@@ -349,8 +349,10 @@ IPv6_Validate
 	:FOR	${item}	in	@{ip6_netmask}
 		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ipv6address_mask":"${item}"}
 		Response Code Should Be	400
-		Response Should Contain String	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
-		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+		# Response Should Contain String	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+		# Last Elog Sholud Contain	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
+		Response Should Contain String	Editing network interface (port${num}) failed,
+		Last Elog Sholud Contain	Editing network interface (port${num}) failed,
 
 Cleaning environments
 	Sleep	1

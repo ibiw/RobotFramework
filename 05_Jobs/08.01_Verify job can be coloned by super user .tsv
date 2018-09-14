@@ -17,7 +17,11 @@ Force Tags	zx
 	Set Suite Variable	${ID1}
 	Response Should Contain Sub Dictionary	id=${ID1}
 	...	url=/api/v1/jobs/job/${ID1}/	plugin=install-config-using-restfulapi
-	...	description="This is description of this job"	device=[{"name": "${Device_Name}", "device_id": ${Device_ID}}]
+	...	description="This is description of this job"
+	${resp_string}	Convert to String	${resp.json()}
+	Should Contain	${resp_string}	u'device': [{u'name': u'${Device_Name}', u'device_id': ${Device_ID}}]
+
+
 
 002  Verify the Elog record correct
 	Last Elog Sholud Contain	Cloning job (testjob) to

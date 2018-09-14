@@ -19,7 +19,7 @@ Force Tags	zx
 	Dictionary Should Contain Sub Dictionary	${resp.json()}	${file_check}
 
 002  Verify the Elog can record correct
-	Last Elog Sholud Contain	Editing configuration file (File_1.conf) succeeded
+	Last Elog Sholud Contain	Editing file (File_1.conf) succeeded
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Create_Config_Directory

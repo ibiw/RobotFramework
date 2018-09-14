@@ -34,7 +34,7 @@ Force Tags	zx
 
 002  Verify non-exist group config cannot be get
 
-	GET	/api/v1/config/lastpush/?group=111&type=time
+	GET	/api/v1/config/lastpush/?group=111111&type=time
 	Response Code Should Be	400
 	Response Should Contain Sub Dictionary	detail=This group is not existed.
 

@@ -35,7 +35,6 @@ Add Route
 
 Get Route ID
 	${RID}=	Search_Filter_ID	/api/v1/system/network/route/	search=101.1
-	${RID}	Set Variable	${7}
 	Set Suite Variable	${RID}
 
 Cleaning environments

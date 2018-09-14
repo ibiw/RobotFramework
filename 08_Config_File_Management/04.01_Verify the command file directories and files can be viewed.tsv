@@ -12,7 +12,7 @@ Force Tags	zx
 001  Verify the directories and files can be viewed
 	GET	/api/v1/jobs/config-file/
 	Response Code Should Be	200
-	${default_list}	Create List	default/Install_Basic_Policy_Config.conf
+	${default_list}	Create List	default/Install_Basic_Policy_Config.conf	default/Install_VDOM_Basic_Policy.conf
 	${file_list}	Create List	Directory_1/File_1.conf
 	${file_check}	Create Dictionary	Directory_1=${file_list}	default=${default_list}
 	Dictionary Should Contain Sub Dictionary	${resp.json()}	${file_check}

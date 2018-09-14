@@ -1,6 +1,6 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 Resource	../Resource/CM_Resource.tsv
-Resource	../Resource/SSH_Resource.tsv
+Resource	../Resource/SSH_Resource_CM.tsv
 Suite Setup	Run Keywords	Fetch_CM_Token
 Suite Teardown	Cleaning environments
 Force Tags	rw
@@ -10,13 +10,22 @@ Force Tags	rw
 # ${data}=	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
 # @{int_val}	1	365	999	1000	-1	x	中文
 # @{int_val}	1	365	999	1000
-@{int_val}	${1}	${365}	${999}
+@{int_val}	${1}	${365}	${999}	${1000}
 @{name}	elog	jobevent	backup
-${is_enable}	True
+@{is_enable}	${True}	${False}
 @{due_time}	23:00	18:00	00:00
-@{id}	${1}	${2}	${3}
+@{id}	${1}	${2}	${3}	${999}
 @{int_unit}	days	weeks	months
-${data}	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+# ${data}	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:00", "int_unit":"days","id":1},{"int_val":54,"name":"jobevent","enabled":true,"due_time":"18:00", "int_unit":"weeks","id":2}, {"int_val":12,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+${int}	${1}
+
+&{item1}	int_val=${int_val[0]}	name=${name[0]}	enabled=${is_enable[0]}	due_time=${due_time[0]}	int_unit=${int_unit[0]}	id=${id[0]}
+&{item2}	int_val=${int_val[1]}	name=${name[1]}	enabled=${is_enable[0]}	due_time=${due_time[1]}	int_unit=${int_unit[1]}	id=${id[1]}
+&{item3}	int_val=${int_val[3]}	name=${name[2]}	enabled=${is_enable[0]}	due_time=${due_time[2]}	int_unit=${int_unit[2]}	id=${id[2]}
+
+@{items}	${item1}	${item2}	${item3}
+
+&{data}	entries=${items}
 
 ###	root@fortiwebcm:/var/log/fwbcm# pwd
 ###	/var/log/fwbcm
@@ -56,8 +65,10 @@ ${data}	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:0
 
 001  Verify the Events logs can be set in Days
 	# POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":333,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
+	# POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":1,"name":"elog","enabled":true,"due_time":"18:00","int_unit":"days","id":1},{"int_val":1,"name":"jobevent","enabled":true,"due_time":"18:00","int_unit":"weeks","id":2},{"int_val":1,"name":"backup","enabled":true,"due_time":"18:00","int_unit":"months","id":3}]}
+
+	Log to Console	${\n}${data["entries"][0]}
 	POST	/api/v1/system/maintenance/clean/	${data}
-	Log to Console	${\n}${int_val[2]}${\n}${resp.json()["err"]}
 	Response Code Should Be	200
 
 002  Verify the Events logs can be set in Weeks
@@ -109,6 +120,53 @@ ${data}	{"entries":[{"int_val":365,"name":"elog","enabled":true,"due_time":"18:0
 # 		POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":"${int}","name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
 
 
+777  Format log disk
+	:FOR 	${int}	in RANGE	1	100
+		SSH_Write	execute formatlogdisk	y
+		Log to Console	${\n}${int}
+		Sleep	60
+
+787  Group Log
+	# POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	# ${id_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	# Set Suite Variable	${id_1}
+	${Job_ID}=	Get_Job_ID	j1
+	:FOR 	${int}	IN RANGE	999999
+		PATCH	/api/v1/devices/group/1/	{"name":"${Group_Name}-${int}"}
+		Log to Console	--${int}-${Job_ID}
+		Response Code Should Be	200
+		POST	api/v1/jobs/job/${Job_ID}/launch/
+		Response Code Should Be	200
+		Sleep	0.5
+
+788  Group Log
+	# POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	# ${id_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	# Set Suite Variable	${id_1}
+	${Job_ID}=	Get_Job_ID	j1
+	:FOR 	${int}	IN RANGE	999999
+		PATCH	/api/v1/devices/group/1/	{"name":"${Group_Name}-${int}"}
+		Log to Console	--${int}-${Job_ID}
+		Response Code Should Be	200
+		POST	api/v1/jobs/job/${Job_ID}/launch/
+		Response Code Should Be	200
+		Sleep	0.5
+
+789  Group Log
+	# POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	# ${id_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	# Set Suite Variable	${id_1}
+	${Job_ID}=	Get_Job_ID	j1
+	:FOR 	${int}	IN RANGE	999999
+		PATCH	/api/v1/devices/group/1/	{"name":"${Group_Name}-${int}"}
+		Log to Console	--${int}-${Job_ID}
+		Response Code Should Be	200
+		POST	api/v1/jobs/job/${Job_ID}/launch/
+		Response Code Should Be	200
+		Sleep	0.5
+
+888  Temp
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":"VIP_1"}
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 

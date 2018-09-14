@@ -14,14 +14,14 @@ Force Tags	zx
 	Response Code Should Be	200
 
 002  Verify the Elog can record correct
-	Last Elog Sholud Contain	Adding configuration directory (Directory_1) succeeded
+	Last Elog Sholud Contain	Adding directory (Directory_1) succeeded
 
 003  Verify the file can be created
 	POST	/api/v1/jobs/backup-file/	${file_data}
 	Response Code Should Be	200
 
 004  Verify the Elog can record correct
-	Last Elog Sholud Contain	Adding configuration file (Directory_1/File_1.conf) succeeded
+	Last Elog Sholud Contain	Adding file (Directory_1/File_1.conf) succeeded
 
 005  Verify the directory and file create succeed
 	GET	/api/v1/jobs/backup-file/?name=Directory_1/File_1.conf
@@ -33,13 +33,13 @@ Force Tags	zx
 	POST	/api/v1/jobs/backup-file/	${directory_data}
 	Response Code Should Be	400
 	Response Should Contain Sub Dictionary	detail=Directory Directory_1 already existing.
-	Last Elog Sholud Contain	Adding configuration (Directory_1) failed, directory (Directory_1) already exists
+	Last Elog Sholud Contain	Adding (Directory_1) failed, directory (Directory_1) already exists
 
 007  Verify the exist file cannot be added
 	POST	/api/v1/jobs/backup-file/	${file_data}
 	Response Code Should Be	400
-	Response Should Contain Sub Dictionary	detail=Duplicate config file File_1.conf
-	Last Elog Sholud Contain	Adding configuration (Directory_1/File_1.conf) failed, duplicate config file found
+	Response Should Contain Sub Dictionary	detail=Duplicate file File_1.conf
+	Last Elog Sholud Contain	Adding (Directory_1/File_1.conf) failed, duplicate file found
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Cleaning environments

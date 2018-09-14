@@ -56,8 +56,8 @@ ${x_1024}	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 	:FOR	${item}	in	@{ip_netmask}
 		PUT	/api/v1/system/network/interface/	{"name":"port1", "ipaddress_mask":"${item}"}
 		Response Code Should Be	400
-		Response Should Contain String	Editing network interface (port1) failed, IP/Mask ${item} format invalid
-		Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask ${item} format invalid
+		Response Should Contain String	Editing network interface (port1) failed,
+		Last Elog Sholud Contain	Editing network interface (port1) failed,
 		# Last Elog Sholud Contain	Editing network interface (port1) failed, IP/Mask format invalid
 		# Editing network interface (port1) failed, IP/Mask 1.1.1./32 is invalid.
 

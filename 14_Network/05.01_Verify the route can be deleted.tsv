@@ -38,5 +38,4 @@ Add Route For Delete
 
 Get Route ID
 	${RID}=	Search_Filter_ID	/api/v1/system/network/route/	search=201.1
-	${RID}	Set Variable	${7}
 	Set Suite Variable	${RID}
