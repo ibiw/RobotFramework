@@ -94,6 +94,7 @@ ${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"co
 	POST	/api/v1/jobs/job/${jid_1}/launch/
 	Set Suite Variable	${jid_1}
 
+
 # 012  Verify it supports the wizard function when the remote or local is enabled vdom
 	# PUT	/api/v1/jobs/config-file/	{"type":"file","name":"wafconfig.conf","content":"set ip 0.0.0.0/16"}
 	# PUT	/api/v1/jobs/config-file/	${Job_File}
