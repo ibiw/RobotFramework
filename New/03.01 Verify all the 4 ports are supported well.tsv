@@ -6,7 +6,7 @@ Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
-${IP_118}	10.200.111.118
+${IP_118}	10.200.111.119
 @{SSH_IP}	${CM_IP}	${IP_118}	${IP_118}	${IP_118}
 @{SSH_IP6}	10:200::acac:101	10:200::acac:102	10:200::acac:103	10:200::acac:104
 @{ip}	ipaddress_mask	${CM_IP}/16	${IP_118}/16	${IP_118}/16	${IP_118}/16	ip

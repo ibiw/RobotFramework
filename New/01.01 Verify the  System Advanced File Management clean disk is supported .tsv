@@ -130,24 +130,24 @@ Force Tags	rw
 # 		POST	/api/v1/system/maintenance/clean/	{"entries":[{"int_val":"${int}","name":"backup","enabled":true,"due_time":"18:00","int_unit":"days","id":3}, {}, {}]}
 
 
-777  Format log disk
-	:FOR 	${int}	in RANGE	1	100
-		SSH_Write	execute formatlogdisk	y
-		Log to Console	${\n}${int}
-		Sleep	60
+# 777  Format log disk
+# 	:FOR 	${int}	in RANGE	1	100
+# 		SSH_Write	execute formatlogdisk	y
+# 		Log to Console	${\n}${int}
+# 		Sleep	60
 
-787  Group Log
-	# POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
-	# ${id_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
-	# Set Suite Variable	${id_1}
-	${Job_ID}=	Get_Job_ID	j1
-	:FOR 	${int}	IN RANGE	999999
-		PATCH	/api/v1/devices/group/1/	{"name":"${Group_Name}-${int}"}
-		Log to Console	--${int}-${Job_ID}
-		Response Code Should Be	200
-		POST	api/v1/jobs/job/${Job_ID}/launch/
-		Response Code Should Be	200
-		Sleep	0.5
+# 787  Group Log
+# 	# POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+# 	# ${id_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+# 	# Set Suite Variable	${id_1}
+# 	${Job_ID}=	Get_Job_ID	j1
+# 	:FOR 	${int}	IN RANGE	999999
+# 		PATCH	/api/v1/devices/group/1/	{"name":"${Group_Name}-${int}"}
+# 		Log to Console	--${int}-${Job_ID}
+# 		Response Code Should Be	200
+# 		POST	api/v1/jobs/job/${Job_ID}/launch/
+# 		Response Code Should Be	200
+# 		Sleep	0.5
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Data_Set
