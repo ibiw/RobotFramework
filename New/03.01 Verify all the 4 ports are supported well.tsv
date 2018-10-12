@@ -1,15 +1,17 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 Resource	../Resource/CM_Resource.tsv
 Resource	../Resource/SSH_Resource_CM.tsv
-Suite Setup	Run Keywords	Fetch_CM_Token
+Suite Setup	Run Keywords	Fetch_CM_Token	
 Suite Teardown	Cleaning environments
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 ${IP_118}	10.200.111.119
+${CM6}	10:200::acac:c6c6
 @{SSH_IP}	${CM_IP}	${IP_118}	${IP_118}	${IP_118}
 @{SSH_IP6}	10:200::acac:101	10:200::acac:102	10:200::acac:103	10:200::acac:104
-@{ip}	ipaddress_mask	${CM_IP}/16	${IP_118}/16	${IP_118}/16	${IP_118}/16	ip
+# @{SSH_IP6}	${CM6}	${CM6}	${CM6}	${CM6}
+@{ip}	ipaddress_mask	${CM_IP}/16	${IP_118}/25	${IP_118}/25	${IP_118}/25	ip
 @{ip6}	ipv6address_mask	${SSH_IP6[0]}/64	${SSH_IP6[1]}/64	${SSH_IP6[2]}/64	${SSH_IP6[3]}/64	ip6
 @{des}	description	port1	port2	port3	port4
 @{ip_netmask}	1.1.1./32	/	1.1.1.1/-1	1.1.1.1/33	1.1.1.1/a	-1.1.1.1/24	1,1,1,1/24	1.1.1.256/24	1.256.1.1/24	1.1.1.a/24
@@ -23,7 +25,9 @@ ${item}
 ## set interface <PORT> (ip|ip6) <IPADDRESS/LENGTH>
 ## Port1 Test
 001  Verify the Port1 can set IPv4 Address in API
+	Clean_Port	${2}	${3}	${4}
 	Port_Set_API	${1}	${ip}
+	# PUT	/api/v1/system/network/interface/	{"name":"port2","ipaddress_mask":"","ipv6address_mask":"","description":"port2", "name":"port3","ipaddress_mask":"","ipv6address_mask":"","description":"port3"}]
 
 002  Verify the Port1 can set IPv6 Address in API
 	Port_Set_API	${1}	${ip6}
@@ -75,14 +79,15 @@ ${item}
 	IPv6_Validate	${1}
 
 018  Verify Port1 has IPv4 address validate in CLI 
-	Sleep	1
+	IPv4_Validate_SSH	${1}
 
 019  Verify Port1 has IPv6 address validate in CLI 
-	Sleep	1
+	IPv6_Validate_SSH	${1}
 
 ## Port2 Test
 101  Verify the Port2 can set IPv4 Address in API
 	Clean_Port	${3}	${4}
+	Port1_Default
 	Port_Set_API	${2}	${ip}
 
 102  Verify the Port2 can set IPv6 Address in API
@@ -98,10 +103,10 @@ ${item}
 	Port_Get_API	${2}
 
 106  Verify the API setted Port2 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${2}
 
 107  Verify the API setted Port2 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${2}
 
 108  Verify the Port2 setting can be GET
 	Port_Get_API	${2}
@@ -123,10 +128,10 @@ ${item}
 	Port_Get_API	${2}
 
 114  Verify the CLI setted Port2 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${2}
 
 115  Verify the CLI setted Port2 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${2}
 
 116  Verify Port2 has IPv4 address validate in API 
 	IPv4_Validate	${2}
@@ -135,10 +140,10 @@ ${item}
 	IPv6_Validate	${2}
 
 118  Verify Port2 has IPv4 address validate in CLI 
-	Sleep	1
+	IPv4_Validate_SSH	${2}
 
 119  Verify Port2 has IPv6 address validate in CLI 
-	Sleep	1
+	IPv6_Validate_SSH	${2}
 
 ## Port3 Test
 201  Verify the Port3 can set IPv4 Address in API
@@ -158,10 +163,10 @@ ${item}
 	Port_Get_API	${3}
 
 206  Verify the API setted Port3 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${3}
 
 207  Verify the API setted Port3 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${3}
 
 208  Verify the Port3 setting can be GET
 	Port_Get_API	${3}
@@ -183,10 +188,10 @@ ${item}
 	Port_Get_API	${3}
 
 214  Verify the CLI setted Port3 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${3}
 
 215  Verify the CLI setted Port3 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${3}
 
 216  Verify Port3 has IPv4 address validate in API 
 	IPv4_Validate	${3}
@@ -195,10 +200,10 @@ ${item}
 	IPv4_Validate	${3}
 
 218  Verify Port3 has IPv4 address validate in CLI 
-	Sleep	1
+	IPv4_Validate_SSH	${3}
 
 219  Verify Port3 has IPv6 address validate in CLI 
-	Sleep	1
+	IPv6_Validate_SSH	${3}
 
 ## Port4 Test
 301  Verify the Port4 can set IPv4 Address in API
@@ -218,10 +223,10 @@ ${item}
 	Port_Get_API	${4}
 
 306  Verify the API setted Port4 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${4}
 
 307  Verify the API setted Port4 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${4}
 
 308  Verify the Port4 setting can be GET
 	Port_Get_API	${4}
@@ -230,7 +235,7 @@ ${item}
 	Port_Set_SSH	${4}	${ip}
 
 310  Verify the Port4 can set IPv6 Address in CLI
-	Port_Set_SSH	${4}	${i6}
+	Port_Set_SSH	${4}	${ip6}
 
 ## unsupport?
 311  Verify the Port4 can set Description in CLI
@@ -243,10 +248,10 @@ ${item}
 	Port_Get_API	${4}
 
 314  Verify the CLI setted Port4 IPv6 address is reachable-SSH
-	Sleep	1
+	Port_Check_SSH6	${4}
 
 315  Verify the CLI setted Port4 IPv6 address is reachable-API
-	Sleep	1
+	Port_Get_API6	${1}
 
 316  Verify Port4 has IPv4 address validate in API 
 	IPv4_Validate	${4}
@@ -255,19 +260,28 @@ ${item}
 	IPv4_Validate	${4}
 
 318  Verify Port4 has IPv4 address validate in CLI 
-	Sleep	1
+	IPv4_Validate_SSH	${4}
 
 319  Verify Port4 has IPv6 address validate in CLI 
 	Clean_Port	${2}	${3}	${4}
-	Sleep	1
+	IPv6_Validate_SSH	${4}
 
 401  duplicate IPv4 address check
+	Sleep	1
+
 402  duplicate IPv6 address check
+	Sleep	1
+	
 403  legitimate IPv6 address support check
+	Sleep	1
+
 # https://en.wikipedia.org/wiki/IPv6_address
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 
+Call_Port_Set_API
+	[Arguments]	${num}	${item}
+	Run Keyword If	${num} == ${1}	Port_Set_API	${num}	${item}
 
 Port_Set_API	
 	[Arguments]	${num}	${item}	
@@ -282,6 +296,10 @@ Port_Set_API
 	Response Code Should Be	200
 	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
 	Log to Console	${\n}--${resp.json()[${num-1}]["${item[0]}"]}
+	${len}=	Get Length	${item}
+	Log to Console	${\n}${len}
+	Run Keyword If	'${item[-1]}'=='ip6'	POST	/api/v1/system/network/route/	{"destination_ip_mask":"::/0", "gateway":"10:200::1", "name":"port${num}"}
+
 
 Port_Set_SSH	
 	[Arguments]	${num}	${item}	
@@ -293,6 +311,10 @@ Port_Set_SSH
 	Response Code Should Be	200
 	Should Match	${resp.json()[${num-1}]["${item[0]}"]}	${item[${num}]}
 	Log to Console	${\n} ${resp.json()[${num-1}]["${item[0]}"]}
+
+	${len}	Set Variable	Get Length	${item}
+	Run Keyword If	'${item[-1]}'=='ip6'	POST	/api/v1/system/network/route/	{"destination_ip_mask":"::/0", "gateway":"10:200::1", "name":"port${num}"}
+
 
 Port_Get_API
 	[Arguments]	${num}
@@ -306,18 +328,20 @@ Port_Get_API
 Port_Get_API6
 	[Arguments]	${num}
 	Set Global Variable	${CM_IP}	[${SSH_IP6[${num-1}]}]
+	Fetch_CM_Token
 	GET	/api/v1/system/network/interface/
 	Response Code Should Be	200
 	Should Match	${resp.json()[${num-1}]["name"]}	port${num}
 	Log to Console	${\n}--${resp.json()[${num-1}]["name"]}
-	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+	Fetch_CM_Token
 
 Port_Check_SSH
 	[Arguments]	${num}
 	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
 	SSH_Write	show interface
 	Check_SSH_Output_Not_Contain	fail	error
-	Check_SSH_Output	${CM_IP}/16
+	Check_SSH_Output	${CM_IP}
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
 
 Port_Check_SSH6
@@ -325,11 +349,26 @@ Port_Check_SSH6
 	Set Global Variable	${CM_IP}	${SSH_IP6[${num-1}]}
 	SSH_Write	show interface
 	Check_SSH_Output_Not_Contain	fail	error
-	Check_SSH_Output	${CM_IP}/64
-	Set Global Variable	${CM_IP}	${SSH_IP6[0]}
+	Check_SSH_Output	${CM_IP}
+	Set Global Variable	${CM_IP}	${SSH_IP[0]}
+
+Port1_Default
+	## To Clean Port1 IPv6 IP address. needs to delete IPv6 route first
+	${RID}=	Search_Filter_ID	/api/v1/system/network/route/	search=::/
+	DELETE	/api/v1/system/network/route/${RID}/
+
+	## Only Keep Port1 IPv4 IP address
+	PUT	/api/v1/system/network/interface/	{"name":"port1","ipaddress_mask":"${CM_IP}/16","ipv6address_mask":"","description":""}
+	Response Code Should Be	200
+	Response Should Contain String	Editing network interface (port1) succeeded
+	Last Elog Sholud Contain	Editing network interface (port1) succeeded
 
 Clean_Port
 	[Arguments]	@{num}
+	## Delete IPv6 Route
+	${RID}=	Search_Filter_ID	/api/v1/system/network/route/	search=::/
+	DELETE	/api/v1/system/network/route/${RID}/
+
 	:FOR	${tmp}	in	@{num}
 		PUT	/api/v1/system/network/interface/	{"name":"port${tmp}","ipaddress_mask":"","ipv6address_mask":"","description":""}
 		Response Code Should Be	200
@@ -341,8 +380,8 @@ IPv4_Validate
 	:FOR	${item}	in	@{ip_netmask}
 		PUT	/api/v1/system/network/interface/	{"name":"port${num}", "ipaddress_mask":"${item}"}
 		Response Code Should Be	400
-		Response Should Contain String	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
-		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IP/Mask ${item} is invalid
+		Response Should Contain String	Editing network interface (port${num}) failed, IP/Mask ${item} format invalid
+		Last Elog Sholud Contain	Editing network interface (port${num}) failed, IP/Mask ${item} format invalid
 
 IPv6_Validate
 	[Arguments]	${num}
@@ -353,6 +392,20 @@ IPv6_Validate
 		# Last Elog Sholud Contain	Editing network interface (port${num}) failed, IPv6/Mask ${item} is invalid
 		Response Should Contain String	Editing network interface (port${num}) failed,
 		Last Elog Sholud Contain	Editing network interface (port${num}) failed,
+
+IPv4_Validate_SSH	
+	[Arguments]	${num}
+	:FOR	${item}	in	@{ip_netmask}
+		SSH_Write	set interface port${num} ip ${item}
+		Check_SSH_Output	Editing network interface (port${num}) failed
+		# Check_SSH_Output_Not_Contain	fail	error
+
+IPv6_Validate_SSH	
+	[Arguments]	${num}
+	:FOR	${item}	in	@{ip6_netmask}
+		SSH_Write	set interface port${num} ip6 ${item}
+		Check_SSH_Output	Editing network interface (port${num}) failed
+		# Check_SSH_Output_Not_Contain	fail	error
 
 Cleaning environments
 	Sleep	1
