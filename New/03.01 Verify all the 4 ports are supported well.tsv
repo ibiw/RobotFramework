@@ -251,7 +251,7 @@ ${item}
 	Port_Check_SSH6	${4}
 
 315  Verify the CLI setted Port4 IPv6 address is reachable-API
-	Port_Get_API6	${1}
+	Port_Get_API6	${4}
 
 316  Verify Port4 has IPv4 address validate in API 
 	IPv4_Validate	${4}
@@ -263,7 +263,6 @@ ${item}
 	IPv4_Validate_SSH	${4}
 
 319  Verify Port4 has IPv6 address validate in CLI 
-	Clean_Port	${2}	${3}	${4}
 	IPv6_Validate_SSH	${4}
 
 401  duplicate IPv4 address check
