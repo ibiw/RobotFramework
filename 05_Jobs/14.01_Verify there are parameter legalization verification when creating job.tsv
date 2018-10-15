@@ -24,7 +24,7 @@ Force Tags	zx
 	Response Should Contain Sub Dictionary	detail=Job (job_backup_config) creation failed, job already existing
 	Last Elog Sholud Contain	Job (job_backup_config) creation failed, job already existing
 
-002  Verify the job's name support all special characters input except " / '
+002  Verify the job's name support all special characters input except
 
 	Set to Dictionary	${request_job_data_characters}	device	${Device_List}
 	${JID}	POST Fetch ID	/api/v1/jobs/job/	${request_job_data_characters}

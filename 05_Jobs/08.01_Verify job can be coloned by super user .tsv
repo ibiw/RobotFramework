@@ -1,6 +1,6 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 Resource	../Resource/CM_Resource.tsv
-Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_a_Job_For_Clone
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Group	Create Device	Get_Device_Information	Create_a_Job_For_Clone	Get UTC Year Month Day time
 Suite Teardown	Cleaning environments
 Force Tags	zx
 
@@ -10,21 +10,42 @@ Force Tags	zx
 001  Verify a job can be coloned by super user
 	Pass Execution If	'${ID}' == '-1'	No Job exist
 	Create Session	POST	https://${CM_IP}
-	${resp}=	POST Request	POST	/api/v1/jobs/job/${ID}/clone/	headers=${admin_headers}
-	Set Suite Variable	${resp}
+	${resp1}=	POST Request	POST	/api/v1/jobs/job/${ID}/clone/	headers=${admin_headers}
 	Response Code Should Be	201
-	${ID1}=	Get_Job_ID	testjob @
+	${ID1}=	Get_Job_ID	testjob@
 	Set Suite Variable	${ID1}
-	Response Should Contain Sub Dictionary	id=${ID1}
+	${clone_data}	Create Dictionary	id=${ID1}
 	...	url=/api/v1/jobs/job/${ID1}/	plugin=install-config-using-restfulapi
 	...	description="This is description of this job"
-	${resp_string}	Convert to String	${resp.json()}
+	Dictionary Should Contain Sub Dictionary	${resp1.json()}	${clone_data}
+	${resp_string}	Convert to String	${resp1.json()}
 	Should Contain	${resp_string}	u'device': [{u'name': u'${Device_Name}', u'device_id': ${Device_ID}}]
-
-
 
 002  Verify the Elog record correct
 	Last Elog Sholud Contain	Cloning job (testjob) to
+	Last Elog Sholud Contain	succeeded
+
+003  Verify the timestamp will add after the last @ in job's name
+
+	${job_data}	Create Dictionary	name=testjob@test@20181011_202131	plugin=install-config-using-restfulapi
+	...	description="This is description of this job"	plugin_option=${Job_Plugin_install_config_Option}
+	...	device=${Device_List}
+	POST	/api/v1/jobs/job/	${job_data}
+	${ID2}=	Get_Job_ID	testjob@test@20181011_202131
+	Set Suite Variable	${ID2}
+	Create Session	POST1	https://${CM_IP}
+	${resp2}=	POST Request	POST1	/api/v1/jobs/job/${ID2}/clone/	headers=${admin_headers}
+	${ID3}=	Get_Job_ID	testjob@test@${year_utc}${month_utc}${day_utc}
+	Set Suite Variable	${ID3}
+	${clone_data1}	Create Dictionary	id=${ID3}
+	...	url=/api/v1/jobs/job/${ID3}/	plugin=install-config-using-restfulapi
+	...	description="This is description of this job"
+	Dictionary Should Contain Sub Dictionary	${resp2.json()}	${clone_data1}
+	Should Not Contain	${resp2.content}	testjob@test@20181011_202131
+	Should Contain	${resp2.content}	testjob@test@${year_utc}${month_utc}${day_utc}
+
+004  Verify the Elog record correct
+	Last Elog Sholud Contain	Cloning job (testjob@test@20181011_202131) to
 	Last Elog Sholud Contain	succeeded
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
@@ -44,3 +65,5 @@ Create_a_Job_For_Clone
 Cleaning environments
 	DELETE	/api/v1/jobs/job/${ID1}/
 	DELETE	/api/v1/jobs/job/${ID}/
+	DELETE	/api/v1/jobs/job/${ID2}/
+	DELETE	/api/v1/jobs/job/${ID3}/
