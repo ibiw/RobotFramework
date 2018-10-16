@@ -1,0 +1,69 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Library	DateTime
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_RADIUSServer	Add_RADIUSUser
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{request_data_radius_user}	username=${username}	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=radius
+# &{Auto_radiususer1_credential_incorrect}	username=test1	password=fortinetfdsfsd
+# &{Auto_radiususer1_credential}	username=test1	password=123456
+# &{patch_data}	name=Auto_RADIUSServer1	server_uri_1=10.200.10.16
+${username}	test1
+${timeout}	${10}
+&{timeout_data}	authTimeout=${timeout}
+@{support_range}	${1}	${60}	${10}
+@{unsupport_items}	${0}	${61}	${-1}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the Authentication Timeout can be Setting
+	POST	/api/v1/system/network/admin-settings/	${timeout_data}
+	Response Code Should Be	200
+
+002  Verify the Authentication Timeout can be Get
+	GET	/api/v1/system/network/admin-settings/
+	Response Code Should Be	200
+	${tmp}	Get Dictionary Values	${resp.json()}
+	Log to Console	${\n}--The current Authentication Timeout value is:  ${tmp[0]} seconds
+	Should be Equal	${tmp[0]}	${timeout}
+
+
+003  Verify the Authentication Timeout works
+	${date1}	Get Current Date
+	# Log to Console	${\n}${date1}
+	Fetch_CM_Token	{"username":"${username}", "password":"fortinet"}
+	# Response Code Should Be	200
+	Last Elog Sholud Contain	User (${username}) with profile (SystemAdmin) logged in
+	${date2}	Get Current Date
+	# Log to Console	${\n}${date2}
+	${date}	Subtract Date from Date	${date2}	${date1}
+	Log to Console	${\n}--The real time used for Authentication is:  ${date} seconds
+	Should be True	${date} > ${timeout}
+	Fetch_CM_Token
+
+004  Verify the Authentication Timeout value range can set 1 to 60
+	:FOR	${item}	in	@{support_range}
+		POST	/api/v1/system/network/admin-settings/	{"authTimeout": ${item}}
+		Response Code Should Be	200
+
+005  Verify the Authentication Timeout value range can only set to 1 to 60
+	:FOR	${item}	in	@{unsupport_items}
+		POST	/api/v1/system/network/admin-settings/	{"authTimeout": ${item}}
+		Response Code Should Be	400
+		Response Should Contain String	Bad timeout value, the value must be integer between 1 and 60
+		Last Elog Sholud Contain	Setting authenticated timeout (${item} seconds) failed
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_RADIUSServer
+	# Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.111.241	server_secret_1=fortinet
+	Create_On_Setup	/api/v1/system/radius-server/	name=Fake_RADIUSServer1	server_uri_1=1.1.1.1	server_secret_1=fake
+
+Add_RADIUSUser
+	# Create_User_On_Setup	/api/v1/system/user/	username=${username}	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=RADIUS
+	Create_User_On_Setup	/api/v1/system/user/	username=${username}	password=fortinet	server=Fake_RADIUSServer1	comments=This is a fake radius user	type=RADIUS
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/system/user/	${username}	username
+	Delete_On_Teardown	/api/v1/system/radius-server/	Fake_RADIUSServer1	name
