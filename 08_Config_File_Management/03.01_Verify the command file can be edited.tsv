@@ -10,8 +10,6 @@ Force Tags	zx
 &{file_data_mod}	type=file	name=Directory_1/File_1.conf	content=${File_Content}
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
-# 20181016 16:19:38.174 - DEBUG - post response: {"d2":"{ \"msg\": \"Duplicate IP address\", \"status\": 500 }"}
-
 001  Verify the file can be edited
 	PUT	/api/v1/jobs/config-file/	${file_data_mod}
 	Response Code Should Be	200
