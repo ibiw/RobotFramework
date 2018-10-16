@@ -1,4 +1,5 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Library	DateTime
 Resource	../Resource/CM_Resource.tsv
 Suite Setup	Run Keywords	Fetch_CM_Token	Add_RADIUSServer	Add_RADIUSUser
 Suite Teardown	Cleaning environments
@@ -10,7 +11,7 @@ Force Tags	rw
 # &{Auto_radiususer1_credential}	username=test1	password=123456
 # &{patch_data}	name=Auto_RADIUSServer1	server_uri_1=10.200.10.16
 ${username}	test1
-${timeout}	${5}
+${timeout}	${10}
 &{timeout_data}	authTimeout=${timeout}
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
@@ -23,23 +24,30 @@ ${timeout}	${5}
 	GET	/api/v1/system/network/admin-settings/
 	Response Code Should Be	200
 	${tmp}	Get Dictionary Values	${resp.json()}
-	# Log to Console	${\n}${tmp[0]}
+	Log to Console	${\n}--The current Authentication Timeout value is:  ${tmp[0]} seconds
 	Should be Equal	${tmp[0]}	${timeout}
 
 
 003  Verify the Authentication Timeout works
+	${date1}	Get Current Date
+	# Log to Console	${\n}${date1}
 	Fetch_CM_Token	{"username":"${username}", "password":"fortinet"}
-	Response Code Should Be	200
-	# Log to Console	${date}
+	# Response Code Should Be	200
 	Last Elog Sholud Contain	User (${username}) with profile (SystemAdmin) logged in
+	${date2}	Get Current Date
+	# Log to Console	${\n}${date2}
+	${date}	Subtract Date from Date	${date2}	${date1}
+	Log to Console	${\n}--The real time used for Authentication is:  ${date} seconds
 	Fetch_CM_Token
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Add_RADIUSServer
-	Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.111.241	server_secret_1=fortinet
+	# Create_On_Setup	/api/v1/system/radius-server/	name=Auto_RADIUSServer1	server_uri_1=10.200.111.241	server_secret_1=fortinet
+	Create_On_Setup	/api/v1/system/radius-server/	name=Fake_RADIUSServer1	server_uri_1=1.1.1.1	server_secret_1=fake
 
 Add_RADIUSUser
-	Create_User_On_Setup	/api/v1/system/user/	username=${username}	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=RADIUS
+	# Create_User_On_Setup	/api/v1/system/user/	username=${username}	password=fortinet	server=Auto_RADIUSServer1	comments=This is a normal radius user	type=RADIUS
+	Create_User_On_Setup	/api/v1/system/user/	username=${username}	password=fortinet	server=Fake_RADIUSServer1	comments=This is a fake radius user	type=RADIUS
 
 Cleaning environments
 	Delete_On_Teardown	/api/v1/system/user/	${username}	username
