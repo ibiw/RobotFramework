@@ -1,0 +1,71 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+# Library	DateTime
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Groups	Add_Devices	Check_FWB_Route
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{route_data_post}	interface=port1	destinationIpMask=2.2.2.2/32	gateway=10.200.0.1
+&{route_data_put}	interface=port1	destinationIpMask=3.3.3.3/32	gateway=10.200.0.1
+&{delete_data}
+${rid}	
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+# 20181016 16:21:06.112 - DEBUG - post response: {"d2":{"interface":"port1","_id":3,"gateway":"10.200.0.1","destinationIpMask":"2.2.2.1/32"}}
+# 20181016 16:19:38.174 - DEBUG - post response: {"d2":"{ \"msg\": \"Duplicate IP address\", \"status\": 500 }"}
+# delete	20181016 16:30:25.782 - DEBUG - post response: {"d2":{"affected":1}}
+001  Verify the JSON-Customer POST works
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"POST","download":false,"url":"System/Network/StaticRoute","payload":{"interface":"port1","destinationIpMask":"2.2.2.2/32", "gateway":"10.200.0.1"}}
+	Response Code Should Be	200
+	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${route_data_post}
+
+002  Verify the JSON-Customer GET works
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"GET","download":false,"url":"System/Network/StaticRoute/","payload":{}}
+	Response Code Should Be	200
+	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"][-1]}	${route_data_post}
+
+003  Verify the JSON-Customer PUT works
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"PUT","download":false,"url":"System/Network/StaticRoute","payload":{"interface":"port1","destinationIpMask":"3.3.3.3/32", "gateway":"10.200.0.1"}}
+	Response Code Should Be	200
+	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${route_data_put}
+
+004  Verify the JSON-Customer DELETE works
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"DELETE","download":false,"url":"System/Network/StaticRoute/2","payload":{}}
+	Response Code Should Be	200
+	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${delete_data}
+
+101  Verify the File-Customer POST works
+
+102  Verify the File-Certificate POST works
+
+103  Verify the File-Local Certificate POST works
+
+104  Verify the File-PKCS12 Certificate POST works
+
+
+	POST	/api/v1/system/network/admin-settings/	${timeout_data}
+	Response Code Should Be	200
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Groups
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	Set Suite Variable	${gid_1}
+
+Add_Devices
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
+	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
+	${did_1}	Convert to Integer	${did_1}
+	Set Suite Variable	${did_1}
+
+Check_FWB_Route
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"GET","download":false,"url":"System/Network/StaticRoute/","payload":{}}
+	Response Code Should Be	200
+	:FOR	${item}	in	@{resp.json()["${Device_Name}"]}
+		Set Global Variable	${rid}	${item["id"]}
+	Log to Console	${\n}-${rid}
+
+Cleaning environments
+	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
+	DELETE	/api/v1/devices/group/${gid_1}/

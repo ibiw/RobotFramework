@@ -32,12 +32,9 @@ ${timeout}	${10}
 
 003  Verify the Authentication Timeout works
 	${date1}	Get Current Date
-	# Log to Console	${\n}${date1}
 	Fetch_CM_Token	{"username":"${username}", "password":"fortinet"}
-	# Response Code Should Be	200
 	Last Elog Sholud Contain	User (${username}) with profile (SystemAdmin) logged in
 	${date2}	Get Current Date
-	# Log to Console	${\n}${date2}
 	${date}	Subtract Date from Date	${date2}	${date1}
 	Log to Console	${\n}--The real time used for Authentication is:  ${date} seconds
 	Should be True	${date} > ${timeout}
@@ -47,6 +44,7 @@ ${timeout}	${10}
 	:FOR	${item}	in	@{support_range}
 		POST	/api/v1/system/network/admin-settings/	{"authTimeout": ${item}}
 		Response Code Should Be	200
+		Last Elog Sholud Contain	Setting authenticated timeout (${item} seconds) succeeded
 
 005  Verify the Authentication Timeout value range can only set to 1 to 60
 	:FOR	${item}	in	@{unsupport_items}
