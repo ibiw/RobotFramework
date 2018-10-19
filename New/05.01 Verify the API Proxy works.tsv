@@ -1,15 +1,20 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 # Library	DateTime
 Resource	../Resource/CM_Resource.tsv
-Suite Setup	Run Keywords	Fetch_CM_Token	Add_Groups	Add_Devices	Check_FWB_Route
-Suite Teardown	Cleaning environments
+# Suite Setup	Run Keywords	Fetch_CM_Token	Add_Groups	Add_Devices	Check_FWB_Route
+Suite Setup	Run Keywords	Fetch_CM_Token
+Suite Teardown	Cleaning environmentss
 Force Tags	rw
 
 *Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 &{route_data_post}	interface=port1	destinationIpMask=2.2.2.2/32	gateway=10.200.0.1
 &{route_data_put}	interface=port1	destinationIpMask=3.3.3.3/32	gateway=10.200.0.1
-&{delete_data}
-${rid}	
+&{delete_data}	affected=${1}
+${rid}	0
+${cert_file}	file/cert/kosart.crt
+${key_file}	file/cert/kosart.key
+${p12_file}	certificate.p12
+
 
 *Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 # 20181016 16:21:06.112 - DEBUG - post response: {"d2":{"interface":"port1","_id":3,"gateway":"10.200.0.1","destinationIpMask":"2.2.2.1/32"}}
@@ -18,39 +23,61 @@ ${rid}
 001  Verify the JSON-Customer POST works
 	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"POST","download":false,"url":"System/Network/StaticRoute","payload":{"interface":"port1","destinationIpMask":"2.2.2.2/32", "gateway":"10.200.0.1"}}
 	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB API (POST: System/Network/StaticRoute) to ['${Device_Name}'] succeeded
 	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${route_data_post}
 
 002  Verify the JSON-Customer GET works
 	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"GET","download":false,"url":"System/Network/StaticRoute/","payload":{}}
 	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB API (GET: System/Network/StaticRoute/) to ['${Device_Name}'] succeeded
 	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"][-1]}	${route_data_post}
 
 003  Verify the JSON-Customer PUT works
 	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"PUT","download":false,"url":"System/Network/StaticRoute","payload":{"interface":"port1","destinationIpMask":"3.3.3.3/32", "gateway":"10.200.0.1"}}
 	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB API (PUT: System/Network/StaticRoute) to ['${Device_Name}'] succeeded
 	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${route_data_put}
 
 004  Verify the JSON-Customer DELETE works
-	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"DELETE","download":false,"url":"System/Network/StaticRoute/2","payload":{}}
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"DELETE","download":false,"url":"System/Network/StaticRoute/${rid+2}","payload":{}}
 	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB API (DELETE: System/Network/StaticRoute/${rid+2}) to ['${Device_Name}'] succeeded
 	Dictionary Should Contain Sub Dictionary	${resp.json()["${Device_Name}"]}	${delete_data}
 
 101  Verify the File-Customer POST works
+	POST	api/v1/system/to-fwb/upload/	${dict_fc_post}
+	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB upload API (System/Network/StaticRoute/) to ['${Device_Name}'] succeeded
 
 102  Verify the File-Certificate POST works
+	# ${output}	Run	dir file\\cert\\kosart.crt
+	# Log to Console	${\n}${output}
+	POST	/api/v1/system/to-fwb/upload/	${dict_cert}
+	Response Code Should Be	200
+	Last Elog Sholud Contain	Forwarding FWB upload API (api/v1.0/System/Certificates/Local) to ['${Device_Name}'] succeeded
 
 103  Verify the File-Local Certificate POST works
+	Sleep	1
 
 104  Verify the File-PKCS12 Certificate POST works
+	POST File	/api/v1/system/to-fwb/upload/	${p12_file}	${dict_k12}
+	Response Code Should Be	200
 
+222  222
+	&{dict_device_data}	Create Dictionary	device_id=${2}	name=d2
+	# ${device_data}	Create List	${dict_device_data}
+	${f1}	Evaluate	open("kosart.crt",'rb')
+	${f2}	Evaluate	open("kosart.key",'rb')
+	${files}	Create Dictionary	certificateFile=${f1}	keyFile=${f2}
 
-	POST	/api/v1/system/network/admin-settings/	${timeout_data}
+	&{dict_cert}	Create Dictionary	certificateFile=kosart.crt	keyFile=kosart.key	password=	device=[${dict_device_data}]	url=api/v1.0/System/Certificates/Local	type=certificate
+	POST_File	/api/v1/system/to-fwb/upload/	${cert_file}	${key_file}	${dict_cert}
 	Response Code Should Be	200
 
 *Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
 Add_Groups
 	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
-	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	${gid_1}	Search_Filter_ID	https://${CM_IP}/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
 	Set Suite Variable	${gid_1}
 
 Add_Devices
@@ -58,14 +85,33 @@ Add_Devices
 	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
 	${did_1}	Convert to Integer	${did_1}
 	Set Suite Variable	${did_1}
+	&{dict_device_data}	Create Dictionary	device_id=${did_1}	name=${Device_Name}
+	${device_data}	Create List	${dict_device_data}
+	&{dict_fc_post}	Create Dictionary	interface=port1	gateway=10.200.0.1	destinationIpMask=5.5.5.5/32	device=${device_data}	url=System/Network/StaticRoute/
+	Set Suite Variable	${dict_fc_post}
+	&{dict_cert}	Create Dictionary	certificateFile=${cert_file}	keyFile=${key_file}	password=	device=${device_data}	url=api/v1.0/System/Certificates/Local	type=certificate
+	set Suite Variable	${dict_cert}
+	&{dict_k12}	Create Dictionary	certificateWithKeyFile=${p12_file}	password=	device=${device_data}	url=api/v1.0/System/Certificates/Local	type=PKCS12Certificate
+	set Suite Variable	${dict_k12}
 
 Check_FWB_Route
 	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"GET","download":false,"url":"System/Network/StaticRoute/","payload":{}}
 	Response Code Should Be	200
 	:FOR	${item}	in	@{resp.json()["${Device_Name}"]}
 		Set Global Variable	${rid}	${item["id"]}
-	Log to Console	${\n}-${rid}
+	# Log to Console	${\n}-${rid}
+POST_File	[Arguments]	${URL}	${Path1}	${Path2}	${data}	${headers}=${post_file_headers}
+	${file1_data}	Evaluate	open($Path1,'rb')
+	${file2_data}	Evaluate	open($Path2,'rb')
+	${files}	Create Dictionary	certificateFile=${file1_data}	keyFile=${file2_data}
+	Create Session	POST	https://${CM_IP}	debug=3
+	${resp}=	POST Request	POST	${URL}	files=${files}	data=${data}	headers=${headers}
+	Set Suite Variable	${resp}
+
 
 Cleaning environments
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"DELETE","download":false,"url":"System/Network/StaticRoute/${rid+1}","payload":{}}
+	POST	/api/v1/system/to-fwb/	{"device":[{"device_id":${did_1},"name":"${Device_Name}"}],"method":"DELETE","download":false,"url":"System/Network/StaticRoute/${rid+2}","payload":{}}
 	Delete_On_Teardown	/api/v1/devices/device/	${Device_Name}	name
 	DELETE	/api/v1/devices/group/${gid_1}/
+

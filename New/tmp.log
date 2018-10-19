@@ -1,0 +1,35 @@
+2018-10-19 03:23:53,625 [systemlock.py:188] [1844-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1844-140665993393920] created for the current process
+2018-10-19 03:23:53,627 [views_proxy.py:481] [1844-140665993393920] DEBUG [api] Start to forward FWB upload API: <QueryDict: {u'url': [u'api/v1.0/System/Certificates/Local'], u'type': [u'certificate'], u'certificateFile': [<InMemoryUploadedFile: kosart.crt (application/x-x509-ca-cert)>], u'device': [u'[{"device_id":2,"name":"d2"}]'], u'password': [u''], u'keyFile': [<InMemoryUploadedFile: kosart.key (application/octet-stream)>]}>
+2018-10-19 03:23:53,630 [views_proxy.py:219] [1844-140665993393920] DEBUG [api] Starting 1 thread(s) for sending FWB API
+2018-10-19 03:23:53,630 [views_proxy.py:153] [1844-140665670076160] DEBUG [api] Sending to (Host=10.200.111.132, URL=api/v1.0/System/Certificates/Local, Method=POST, Data={u'password': u'', u'type': u'certificate'}, Files=OrderedDict([(u'certificateFile', u'/var/fwbcm_backups/upload_73e095c2-8dd5-479b-bdba-d540553ed0a3/kosart.crt'), (u'keyFile', u'/var/fwbcm_backups/upload_73e095c2-8dd5-479b-bdba-d540553ed0a3/kosart.key')]))
+2018-10-19 03:23:53,649 [views_proxy.py:179] [1844-140665670076160] ERROR [api] { "msg": "Certificate already exists, please delete and then upload.", "status": 500 }
+Traceback (most recent call last):
+  File "./api/views_proxy.py", line 158, in _send_to_fwb
+    res_content = fwb_api_obj.commit()
+  File "/opt/FortiwebCM/playbook/lib/pyFWB/fortiwebapi.py", line 166, in commit
+    response = self.candidate_api.rest_run()
+  File "/opt/FortiwebCM/playbook/lib/pyFWB/fortiwebapi.py", line 298, in rest_run
+    raise exceptions.FailedCommit(str(response.content))
+FailedCommit: { "msg": "Certificate already exists, please delete and then upload.", "status": 500 }
+2018-10-19 03:23:53,710 [views_proxy.py:181] [1844-140665670076160] WARNING [api] Unable to get the response from (10.200.111.132), exception captured: { "msg": "Certificate already exists, please delete and then upload.", "status": 500 }
+2018-10-19 03:23:53,710 [consumers.py:112] [1844-140665670076160] DEBUG [api] WS MSG TO FRONTEND (from=_push_ws_msg): channel=(proxy-file-up-1422090324e0413f4a5f0eaf30f04f4d0e346995), msg=({'detail': u'd2 (10.200.111.132) file upload failed: { "msg": "Certificate already exists, please delete and then upload.", "status": 500 }.'})
+2018-10-19 03:23:53,828 [views_proxy.py:517] [1844-140665993393920] INFO [api] log_id=[0106062003] type=[event] subtype=[System Settings] pri=[Information] user=[admin] msg=[Forwarding FWB upload API (api/v1.0/System/Certificates/Local) to ['d2'] succeeded]
+2018-10-19 03:23:53,829 [systemlock.py:199] [1844-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1844-140665993393920] removed for the current process
+
+
+
+
+2018-10-19 03:26:14,582 [authentication.py:32] [1845-140665993393920] WARNING [api] No requesting auth token found
+2018-10-19 03:26:14,583 [systemlock.py:188] [1845-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1845-140665993393920] created for the current process
+2018-10-19 03:26:14,630 [views.py:4622] [1845-140665993393920] INFO [api] User admin logged in
+2018-10-19 03:26:14,634 [views.py:4654] [1845-140665993393920] INFO [api] log_id=[0106060029] type=[event] subtype=[System Settings] pri=[Information] user=[admin] msg=[User (admin) with profile (SystemAdmin) logged in from API (10.200.111.28)]
+2018-10-19 03:26:14,634 [systemlock.py:199] [1845-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1845-140665993393920] removed for the current process
+2018-10-19 03:26:14,695 [systemlock.py:188] [1848-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1848-140665993393920] created for the current process
+2018-10-19 03:26:14,697 [views_proxy.py:481] [1848-140665993393920] DEBUG [api] Start to forward FWB upload API: <QueryDict: {u'url': [u'api/v1.0/System/Certificates/Local'], u'certificateFile': [u'kosart.crt', <InMemoryUploadedFile: kosart.crt ()>], u'keyFile': [u'kosart.key', <InMemoryUploadedFile: kosart.key ()>], u'device': [u"{u'device_id': 2, u'name': u'd2'}"], u'password': [u''], u'type': [u'certificate']}>
+2018-10-19 03:26:14,698 [views_proxy.py:521] [1848-140665993393920] ERROR [api] 'unicode' object has no attribute 'get'
+Traceback (most recent call last):
+  File "./api/views_proxy.py", line 500, in handle_fwb_upload
+    dev_names = [str(dev.get('name', '')) for dev in devices]
+AttributeError: 'unicode' object has no attribute 'get'
+2018-10-19 03:26:14,700 [views_proxy.py:523] [1848-140665993393920] ERROR [api] log_id=[0106062004] type=[event] subtype=[System Settings] pri=[Error] user=[admin] msg=[Forwarding FWB upload API (api/v1.0/System/Certificates/Local) failed, internal exception captured]
+2018-10-19 03:26:14,701 [systemlock.py:199] [1848-140665993393920] DEBUG [api] Worker lock file [/run/lock/fwbcm_worker-1848-140665993393920] removed for the current process
