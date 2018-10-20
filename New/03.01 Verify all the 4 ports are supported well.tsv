@@ -340,7 +340,8 @@ Port_Check_SSH
 	Set Global Variable	${CM_IP}	${SSH_IP[${num-1}]}
 	SSH_Write	show interface
 	Check_SSH_Output_Not_Contain	fail	error
-	Check_SSH_Output	${CM_IP}
+	# Check_SSH_Output	${CM_IP}
+	Check_SSH_Output	${ip[${num}]}
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
 
 Port_Check_SSH6
@@ -348,7 +349,8 @@ Port_Check_SSH6
 	Set Global Variable	${CM_IP}	${SSH_IP6[${num-1}]}
 	SSH_Write	show interface
 	Check_SSH_Output_Not_Contain	fail	error
-	Check_SSH_Output	${CM_IP}
+	# Check_SSH_Output	${CM_IP}
+	Check_SSH_Output	${ip6[${num}]}
 	Set Global Variable	${CM_IP}	${SSH_IP[0]}
 
 Port1_Default
