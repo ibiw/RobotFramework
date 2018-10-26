@@ -18,13 +18,13 @@ Force Tags	zx
 	Response Code Should Be	200
 	Run Keyword If	'FVVM00UNLICENSED' == '${result1[93:109]}'	Sleep	60
 	Run Keyword If	'${license_file_Name1}' == '${result1[93:109]}'	Sleep	10
-	Response Should Contain Sub Dictionary	detail=Installing license succeeded
+	Response Should Contain Sub Dictionary	detail=Installing license succeeded !
 
 002  Verify the license's status changed
 	GET	/api/v1/licenses/?search=${license_file_Name1}
 	Response Code Should Be	200
 #	Response Should Contain Sub Dictionary	status=used
-	Should Contain	${resp.content}	"status":"used"
+	Should Contain	${resp.content}	"status":"In use"
 
 003  Verify the Elog can record correct
 

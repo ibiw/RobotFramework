@@ -29,21 +29,21 @@ Force Tags	zx
 	Should Contain	${resp.content}	ok=3
 	Should Contain	${resp.content}	changed=1
 
-003  Verify the group's device can be manual launched
+#003  Verify the group's device can be manual launched
 
-	${request_job_data1}	Create Dictionary	name=job_backup_config_manual_group	plugin=backup-config-for-fortiweb	device=${Group_List}
-	POST	/api/v1/jobs/job/manual-launch/	${request_job_data1}
-	Response Code Should Be	200
-	Sleep	30
-	${Job_Event_ID1}=	Get_Job_Event_ID	job_backup_config_manual_group
-	Set Suite Variable	${Job_Event_ID1}
+#	${request_job_data1}	Create Dictionary	name=job_backup_config_manual_group	plugin=backup-config-for-fortiweb	device=${Group_List}
+#	POST	/api/v1/jobs/job/manual-launch/	${request_job_data1}
+#	Response Code Should Be	200
+#	Sleep	30
+#	${Job_Event_ID1}=	Get_Job_Event_ID	job_backup_config_manual_group
+#	Set Suite Variable	${Job_Event_ID1}
 
-	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
-	Response Code Should Be	200
-	Response Should Contain Sub Dictionary	id=${Job_Event_ID1}	name=job_backup_config_manual_group	device=${Group_List}
-	Should Contain	${resp.content}	failed=0
-	Should Contain	${resp.content}	ok=3
-	Should Contain	${resp.content}	changed=1
+#	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
+#	Response Code Should Be	200
+#	Response Should Contain Sub Dictionary	id=${Job_Event_ID1}	name=job_backup_config_manual_group	device=${Group_List}
+#	Should Contain	${resp.content}	failed=0
+#	Should Contain	${resp.content}	ok=3
+#	Should Contain	${resp.content}	changed=1
 
 004  Verify if missing device/group parameter , the job can be launched
 

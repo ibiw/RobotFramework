@@ -37,7 +37,7 @@ Force Tags	zx
 	Should Contain	${resp.content}	"count":1
 	Should Contain	${resp.content}	"unified_job_template":"/api/v1/jobs/workflow/${${ID}}/"
 
-003  Verify the workflow job and job node launch successfully
+003  Verify the node of job launch successfully
 	${Job_Event_ID1}	Set Variable	${${Event_ID_tmp}+${1}}
 	GET	/api/v1/jobs/job/event/${Job_Event_ID1}/
 	Response Code Should Be	200
@@ -52,8 +52,18 @@ Force Tags	zx
 	Response Should Contain Sub Dictionary	id=${Job_Event_ID2}	name=job_push_config_file_node	device=${Device_List}
 	Check The Job Launch Successfully
 
+004  Verify the workflow job and job node launch successfully
+	GET	/api/v1/jobs/workflow/event/${Event_ID_tmp}/
+	Response Should Contain Sub Dictionary	id=${Event_ID_tmp}	url=/api/v1/jobs/workflow/event/${Event_ID_tmp}/
+	...	unified_job_template=${ID}
 
-004  Verify the non-exist workflow job cannot be launched
+	GET	/api/v1/jobs/workflow/event/${Event_ID_tmp}/workflow-node/
+	Response Should Contain Sub Dictionary	count=${2}
+
+005  Verify the workflow job event can be viewed
+	
+
+006  Verify the non-exist workflow job cannot be launched
 	POST	/api/v1/jobs/workflow/12345/launch/
 	Response Code Should Be	404
 	Response Should Contain Sub Dictionary	detail=Not found.
@@ -87,4 +97,4 @@ Cleaning environments
 	Delete_On_Teardown	/api/v1/jobs/workflow/	workflow_1
 	Delete_On_Teardown	/api/v1/jobs/job/	job_backup_config_node
 	Delete_On_Teardown	/api/v1/jobs/job/	job_push_config_file_node
-	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test.conf
+	DELETE	/api/v1/jobs/config-file/?type=file&name=default/job_test.conf`

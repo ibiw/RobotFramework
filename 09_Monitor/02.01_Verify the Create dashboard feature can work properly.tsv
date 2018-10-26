@@ -1,0 +1,67 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile	Add_Local_User
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{admin_incorrect_headers}	Authorization=Basic 390bac56054260fcd9f9afa855dd11d891942094	Content-Type=application/json
+&{dashboard_name}	title=AutoTest_Dashboard1
+&{dashboard_64_name}	title=AutoTest_Dashboard1234567890123456789012345678901234567890123456
+&{dashboard_invalid_name}	title=!@#$%^&*()
+${readonly_profile}	file/sendfile/readonly_profile.txt
+&{fortiweb_qa_credential}	username=fortiweb_qa	password=fortinet
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the user with invalid credential can't create dashboard
+	POST	/api/v1/monitor/dashboard/	${dashboard_name}	${admin_incorrect_headers}
+	Response Code Should Be	401
+	Response Should Contain String	Invalid username/password.
+
+002  Verify the admin can create dashboard
+	POST	/api/v1/monitor/dashboard/	${dashboard_name}
+	Response Code Should Be	200
+	Response Should Contain Key	title
+	Response Should Contain Key	uid
+#	Last Elog Sholud Contain	Dashboard (AutoTest_Dashboard1) deletion succeeded
+
+003  Verify the admin can create dashboard with 64 character name
+	POST	/api/v1/monitor/dashboard/	${dashboard_64_name}
+	Response Code Should Be	200
+	Response Should Contain Key	title
+	Response Should Contain Key	uid
+#	Last Elog Sholud Contain	Dashboard (AutoTest_Dashboard1234567890123456789012345678901234567890123456) creation suceeded
+
+004  Verify the admin can't create exist dashboard
+	POST	/api/v1/monitor/dashboard/	${dashboard_name}
+	Response Code Should Be	400
+	Response Should Contain String	Dashboard creation failed
+#	Last Elog Sholud Contain	Dashboard creation failed
+
+005  Verify the admin can't create a dashboard with invalid characters
+	POST	/api/v1/monitor/dashboard/	${dashboard_invalid_name}
+	Response Code Should Be	400
+	Response Should Contain String	Dashboard creation failed
+#	Last Elog Sholud Contain	Dashboard creation failed
+
+006  Verify the user with no monitor write privilege can't create dashboard
+	Fetch_CM_Token	${fortiweb_qa_credential}
+	POST	/api/v1/monitor/dashboard/	${dashboard_name}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.	
+#	Last Elog Sholud Contain	Dashboard creation failed
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${readonly_profile}	name=readonly_profile
+
+Add_Local_User
+	Create_User_On_Setup	/api/v1/system/user/	username=fortiweb_qa	password=fortinet	description=This is a normal local user	profile=${ID}
+
+Cleaning environments
+	Fetch_CM_Token
+	Delete_On_Teardown	/api/v1/system/user/	fortiweb_qa	username
+	Delete_On_Teardown	/api/v1/system/profile/	readonly_profile	name
+	Delete_Dashboard_On_Teardown	/api/v1/monitor/dashboard/	AutoTest_Dashboard1
+	Delete_Dashboard_On_Teardown	/api/v1/monitor/dashboard/	AutoTest_Dashboard1234567890123456789012345678901234567890123456

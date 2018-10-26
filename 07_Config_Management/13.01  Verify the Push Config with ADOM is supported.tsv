@@ -1,0 +1,204 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Resource	../Resource/SSH_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Groups	Add_Devices
+Suite Teardown	Cleaning environments
+Force Tags	rw
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+${Job_Plugin_push_config_directly_Option}	{\"load_type\":\"add\",\"config\":\"config global\\n  config system global\\n  set adom-admin enable\\n  end\\n",\"force\":true}
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+001  Verify the ADOM enabled setting can be pushed
+	SSH_Write	config system global	set adom-admin enable	end
+	Push_Config
+
+## Failed with No config need to push!
+002  Verify the new added ADOM can be pushed
+	SSH_Write	config vdom	edit ADOM_01	end
+	Push_Config	
+
+## Failed with {"detail":"Push successfully."}
+## Configuration push for device (d1) succeeded
+003  Verify the ADOM disabled setting can be pushed
+	SSH_Write	config global	config system global	set adom-admin disable	end
+	Push_Config
+
+004  Verify the ADOM Enable and new added ADOM can be can be pushed together
+	SSH_Write	config system global	set adom-admin enable	end
+	Sleep	3
+	SSH_Write	config vdom	edit ADOM_01	end
+	Push_Config
+
+005  Verify the new added Virtual Server in root ADOM still can be pushed
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_01_root": "192.168.201.1/32", "interface_VServer_01_root": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_01_root": "192.168.101.1/32", "interface_VServer_01_root": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit root	config server-policy vserver	edit VServer_01	 set interface port1	set vip 192.168.101.1/32	set status enable	end
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Sleep	1
+	Push_Config
+
+006  Verify the new added customer Service in root ADOM still can be pushed
+	# PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_01_root": "192.168.101.1/32", "interface_VServer_01_root": "port1"}}
+	# Response Code Should Be	200
+	SSH_Write	config vdom	edit root	config server-policy service custom	edit CServer_01	set protocol TCP	set port 3281	end
+	# PUT	/api/v1/devices/device/update/	{}
+	# Response Code Should Be	200
+	Push_Config
+
+007  Verify the new added Virtual Server in the new ADOM can be pushed
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_11_ADOM_01": "192.168.202.1/32", "interface_VServer_11_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_11_ADOM_01": "192.168.102.1/32", "interface_VServer_11_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_11	 set interface port1	set vip 192.168.102.1/32	set status enable	end
+	PUT	/api/v1/devices/device/update/	{}
+	Response Code Should Be	200
+	Sleep	1
+	Push_Config
+
+008  Verify the new added Custom Service in the new ADOM can be pushed
+	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_11	set protocol TCP	set port 3281	end
+	Sleep	1
+	Push_Config
+
+# Status: Fail
+# Detail: Virtual Server config is conflicted for wrong parameter
+009  Verify there is paras conflicted checking when push new ADOM Virtual Server
+	PATCH	/api/v1/devices/device/${did_2}/	{"variables":{"vip_VServer_12_ADOM_01": "192.168.201.1/32", "interface_VServer_12_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	PATCH	/api/v1/devices/device/${did_1}/	{"variables":{"vip_VServer_12_ADOM_01": "192.168.103.1/32", "interface_VServer_12_ADOM_01": "port1"}}
+	Response Code Should Be	200
+	SSH_Write	config vdom	edit ADOM_01	config server-policy vserver	edit VServer_12	 set interface port1	set vip 192.168.103.1/32	set status enable	end
+	Push_Config_Check
+
+# Status: Fail
+# Detail: Virtual Server config is conflicted for wrong parameter
+010  Verify there is paras conflicted checking when push new ADOM Custom Service
+	${IP_Backup}	Set Variable	${Device_IPaddress}
+	Set Global Variable	${Device_IPaddress}	${Device_IPaddress2}
+	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_666	set protocol TCP	set port 3288	end
+	Set Global Variable	${Device_IPaddress}	${IP_Backup}
+	SSH_Write	config vdom	edit ADOM_01	config server-policy service custom	edit CServer_13	set protocol TCP	set port 3288	end
+	Sleep	1
+	Push_Config_Check
+
+011  Verify it supports the job function when pushing the command with vdom's config
+	# POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option": {"load_type":"add", "config":"onfig vdom	edit root	config server-policy service custom	delete CServer_01	delete T_999	end"}}
+	POST	/api/v1/jobs/job/	{"name":"Test_Job-01", "device":[{"device_id":${did_1}, "device_name":"${Device_Name}"}], "plugin":"push-command-to-fortiweb", "plugin_option":${Job_Plugin_push_config_directly_Option}}
+	${jid_1}	Search_Filter_ID	/api/v1/jobs/job/	search=Test_Job-01
+	POST	/api/v1/jobs/job/${jid_1}/launch/
+	Set Suite Variable	${jid_1}
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+Add_Groups
+	POST	/api/v1/devices/group/	{"name":"${Group_Name}", "description":"This is ${Group_Name}", "variables":{"VIP_1": "1.1.1.1", "DMZ": "Port1"}}
+	${gid_1}	Search_Filter_ID	/api/v1/devices/group/	search=${Group_Name}&name__exact=${Group_Name}
+	Set Suite Variable	${gid_1}
+
+Add_Devices
+	POST	/api/v1/devices/device/	{"name":"${Device_Name}", "username":"${Device_Username}", "password":"${Device_Password}", "ipaddress":"${Device_IPaddress}", "group":"${gid_1}", "variables":${device_Variables}}
+	POST	/api/v1/devices/device/	{"name":"${Device_Name2}", "username":"${Device_Username2}", "password":"${Device_Password2}", "ipaddress":"${Device_IPaddress2}", "group":"${gid_1}", "variables":${device_Variables2}}
+	${did_1}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name}&name__exact=${Device_Name}
+	Set Suite Variable	${did_1}
+	${did_2}	Search_Filter_ID	/api/v1/devices/device/	search=${Device_Name2}&name__exact=${Device_Name2}
+	Set Suite Variable	${did_2}
+
+Del_Devices_Group
+	DELETE	/api/v1/devices/device/${did_1}
+	DELETE	/api/v1/devices/device/${did_2}
+	DELETE	/api/v1/devices/group/${gid_1}
+
+Disable_ADOM
+	${IP_Backup}	Set Variable	${Device_IPaddress}
+	SSH_Write	config global	config system global	set adom-admin disable	end
+	Set Global Variable	${Device_IPaddress}	${Device_IPaddress2}
+	SSH_Write	config global	config system global	set adom-admin disable	end
+	Set Global Variable	${Device_IPaddress}	${IP_Backup}
+
+Delete_VServer_Service
+	SSH_Write	config server-policy vserver	delete VServer_01	end	config server-policy service custom	delete CServer_01	end
+	# SSH_Write	config server-policy service custom	delete CServer_01	end	
+	${IP_Backup}	Set Variable	${Device_IPaddress}
+	Set Global Variable	${Device_IPaddress}	${Device_IPaddress2}
+	SSH_Write	config server-policy vserver	delete VServer_01	end	config server-policy service custom	delete CServer_01	end
+	# SSH_Write	config server-policy service custom	delete CServer_01	end	
+	Set Global Variable	${Device_IPaddress}	${IP_Backup}
+
+Push_Config
+	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
+	Response Code Should Be	200
+	Sleep	1
+	GET	/api/v1/devices/group/${gid_1}/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/sync-config/	{"device":${did_1}}
+	Response Code Should Be	200
+	Sleep	70
+	POST	/api/v1/config/group-config/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	20
+	POST	/api/v1/config/config-check/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	60
+	GET	/api/v1/devices/group/${gid_1}/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/push-config/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Response Should Contain Sub Dictionary	detail=Push successfully.
+	Sleep	20
+
+Push_Config_Check
+	PUT	/api/v1/config/config-setting/	{"group":${gid_1},"system":1,"user":0,"server_policy":1,"waf":1,"log":0}
+	Response Code Should Be	200
+	Sleep	1
+	GET	/api/v1/devices/group/${gid_1}/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/sync-config/	{"device":${did_1}}
+	Response Code Should Be	200
+	Sleep	70
+	POST	/api/v1/config/group-config/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	20
+	POST	/api/v1/config/config-check/	{"group":${gid_1}}
+	Response Code Should Be	200
+	Sleep	60
+	GET	/api/v1/devices/group/${gid_1}/device/
+	Response Code Should be	200
+	Sleep	3
+	POST	/api/v1/config/push-config/	{"group":${gid_1}}
+	Response Code Should Be	400
+	Response Should Contain Sub Dictionary	detail=There are no devices need to push. The devices are either no need push or failed to check.
+	Sleep	20
+
+# 主题 从 配置同步 对于 ADOM 的支持 变更为 Config Mgmt/Job-Push Config should support the FWB which the ADOM is enabled.
+# 1. can push the vdom status to the remote, no matter the cm vdom status is same or different from the remote.
+# 2. can push the config to the remote no matter the cm vdom config is same or different from the remote, including the vdom status.
+# 3. support checking the vs and service paras are conflicted, when pushing the vdom config.
+# 4. support the wizard function when the remote or local is enabled vdom.
+# 5. support the job function when pushing the command with vdom's config.
+
+# Notice:
+# If you are pushing the config, you must specify the command to tail the remote device whether is it a vdom config, or it will be pushed as non-vdom config.
+
+# 6. support the machine learning when the local or remote device is enabled vdom.
+
+Cleaning environments
+#	POST	/api/v1/system/maintenance/clean/	{"entries":${back_data}}
+#	POST	/api/v1/system/maintenance/clean/	${data}
+	Sleep	1
+	# Remove Job
+	DELETE	/api/v1/jobs/job/${jid_1}
+	# delete devices and group
+	Del_Devices_Group
+	# Disable ADOM
+	Disable_ADOM
+	# Delete Virtual Server and Services
+	Delete_VServer_Service
+

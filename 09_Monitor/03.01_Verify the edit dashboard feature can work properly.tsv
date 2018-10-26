@@ -1,0 +1,62 @@
+*Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+Resource	../Resource/CM_Resource.tsv
+Suite Setup	Run Keywords	Fetch_CM_Token	Add_Profile	Add_Local_User	Add_Dashboard
+Suite Teardown	Cleaning environments
+Force Tags	wcxu
+
+*Variable*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
+&{admin_incorrect_headers}	Authorization=Basic 390bac56054260fcd9f9afa855dd11d891942094	Content-Type=application/json
+${readonly_profile}	file/sendfile/readonly_profile.txt
+&{fortiweb_qa_credential}	username=fortiweb_qa	password=fortinet
+
+
+*Test Case*	*Action*	 *Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+001  Verify the user with invalid credential can't edit dashboard
+	${dashboard_data}=	Create Dictionary	title=AutoTest_Dashboard1	uid=${ID}
+	PUT	/api/v1/monitor/dashboard/	${dashboard_data}	${admin_incorrect_headers}
+	Response Code Should Be	401
+	Response Should Contain String	Invalid username/password.
+
+002  Verify the title can't contain invalid characters
+	${dashboard_invalid_data}=	Create Dictionary	title=!@#$%^&*()	uid=${ID}
+	PUT	/api/v1/monitor/dashboard/	${dashboard_invalid_data}	${admin_incorrect_headers}
+	Response Code Should Be	401
+	Response Should Contain String	Invalid username/password.
+
+003  Verify the value of title must be string type
+	${dashboard_invalid_title}=	Create Dictionary	title=${123456}	uid=${ID}
+	PUT	/api/v1/monitor/dashboard/	${dashboard_invalid_title}	${admin_incorrect_headers}
+	Response Code Should Be	401
+	Response Should Contain String	Invalid username/password.
+
+004  Verify the title can be edit
+	${dashboard_data}=	Create Dictionary	title=AutoTest_Dashboard1	uid=${ID}
+	PUT	/api/v1/monitor/dashboard/	${dashboard_data}
+	Response Code Should Be	200
+	Response Should Contain String	Editing dashboard succeeded
+
+005  Verify the dashboard can't be edit when the user has no write privilege
+	${dashboard_data}=	Create Dictionary	title=AutoTest_Dashboard1	uid=${ID}
+	Fetch_CM_Token	${fortiweb_qa_credential}
+	PUT	/api/v1/monitor/dashboard/	${dashboard_data}
+	Response Code Should Be	403
+	Response Should Contain String	You do not have permission to perform this action.
+
+*Keyword*	*Action*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*	*Argument*
+
+
+
+Add_Profile
+	Create_Profile_On_Setup	/api/v1/system/profile/	${readonly_profile}	name=readonly_profile
+
+Add_Local_User
+	Create_User_On_Setup	/api/v1/system/user/	username=fortiweb_qa	password=fortinet	description=This is a normal local user	profile=${ID}
+
+Add_Dashboard
+	Create_Dashboard_On_Setup	/api/v1/monitor/dashboard/	title=AutoTest_Dashboard1
+
+Cleaning environments
+	Fetch_CM_Token
+	Delete_On_Teardown	/api/v1/system/user/	fortiweb_qa	username
+	Delete_On_Teardown	/api/v1/system/profile/	readonly_profile	name
+	Delete_Dashboard_On_Teardown	/api/v1/monitor/dashboard/	AutoTest_Dashboard1

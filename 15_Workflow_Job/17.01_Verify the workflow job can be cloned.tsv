@@ -1,6 +1,6 @@
 *Setting*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*	*Value*
 Resource	../Resource/CM_Resource.tsv
-Suite Setup	Run Keywords	Fetch_CM_Token	Create Workflow Job	Get UTC Year Month Day time
+Suite Setup	Run Keywords	Fetch_CM_Token	Create Workflow Job	Get Year Month Day time
 Suite Teardown	Cleaning environments
 Force Tags	zx
 
@@ -37,13 +37,13 @@ Force Tags	zx
 	Set Suite Variable	${ID2}
 	Create Session	POST1	https://${CM_IP}
 	${resp2}=	POST Request	POST1	/api/v1/jobs/workflow/${ID2}/copy/	headers=${admin_headers}
-	${ID3}=	Get_Workflow_Job_ID	workflowjob@workflow@${year_utc}${month_utc}${day_utc}
+	${ID3}=	Get_Workflow_Job_ID	workflowjob@workflow@${year}${month}${day}
 	Set Suite Variable	${ID3}
 	${clone_data1}	Create Dictionary	id=${ID3}
 	...	url=/api/v1/jobs/workflow/${ID3}/	description=This workflow job for clone
 	Dictionary Should Contain Sub Dictionary	${resp2.json()}	${clone_data1}
 	Should Not Contain	${resp2.content}	workflowjob@workflow@20181011_202131
-	Should Contain	${resp2.content}	workflowjob@workflow@${year_utc}${month_utc}${day_utc}
+	Should Contain	${resp2.content}	workflowjob@workflow@${year}${month}${day}
 
 005  Verify the non-exist workflow job cannot be deleted
 	POST	/api/v1/jobs/workflow/12345/copy/
